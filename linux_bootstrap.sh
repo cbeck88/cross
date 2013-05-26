@@ -20,7 +20,6 @@ if [ -f glibc_headers.marker ]; then
   echo "--> Glibc headers already installed."
 else
   echo "--> Installing Glibc headers."
-  cd "$_CROSS_BOOTSTRAP_DIR"
   mkdir -p glibc && cd glibc
   sh $_CROSS_SOURCE_DIR/glibc-$_CROSS_VERSION_GLIBC/configure --prefix=$_CROSS_BOOTSTRAP_DIR/install \
      --build=${_CROSS_BUILD} --host=${_CROSS_BUILD} \
@@ -33,3 +32,30 @@ else
   cd "$_CROSS_BOOTSTRAP_DIR"
 fi
 touch glibc_headers.marker
+
+if [ -f binutils.marker ]; then
+  echo "--> Binutils bootstrap already done."
+else
+  echo "--> Building bootstrap binutils."
+  mkdir -p binutils && cd binutils
+  sh $_CROSS_SOURCE_DIR/binutils-$_CROSS_VERSION_BINUTILS/configure --prefix=$_CROSS_BOOTSTRAP_DIR/install \
+     --enable-static --disable-shared \
+     --enable-multilib \
+     > "$_CROSS_LOG_DIR/binutils_bootstrap.log" 2>&1 || exit 1
+  
+  make tooldir=$_CROSS_BOOTSTRAP_DIR/install > "$_CROSS_LOG_DIR/binutils_bootstrap.log" 2>&1 || exit 1
+  make tooldir=$_CROSS_BOOTSTRAP_DIR/install install > "$_CROSS_LOG_DIR/binutils_bootstrap.log" 2>&1 || exit 1
+  cd "$_CROSS_BOOTSTRAP_DIR"
+fi
+touch binutils.marker
+
+if [ -f gcc.marker ]; then
+  echo "--> GCC bootstrap already done."
+else
+  echo "--> Building bootstrap GCC."
+  mkdir -p gcc && cd gcc
+  
+  cd "$_CROSS_BOOTSTRAP_DIR"
+fi
+touch gcc_bootstrap.marker
+
