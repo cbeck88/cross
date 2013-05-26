@@ -1,5 +1,4 @@
 #! /bin/env sh
-set -e
 
 echo "--> Defining Cross directory tree"
 _CROSS_DIR="`pwd`"

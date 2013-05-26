@@ -1,5 +1,4 @@
 #! /usr/bin/env sh
-set -e
 
 # build prerequisites check
 function check_executables
