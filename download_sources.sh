@@ -11,6 +11,7 @@ LINUX_URL="ftp://ftp.nluug.nl/mirror/os/Linux/system/kernel/v3.x"
 
 # patches
 PPL_PATCHES="$_CROSS_PATCH_DIR/ppl-gmp-5.1.patch.txt"
+BINUTILS_PATCHES="$_CROSS_PATCH_DIR/binutils-texinfo-5.0.patch.txt"
 case "$_CROSS_VERSION_GCC" in
   "4.[5-6]*")
     GCC_PATCHES="$_CROSS_PATCH_DIR/gcc-CLOOG_INT.patch.txt" ;;
@@ -28,7 +29,7 @@ download_source_release "$CLOOG_URL"    "cloog-$_CROSS_VERSION_CLOOG" "gz"
 download_source_release "$EXPAT_URL"    "expat-$_CROSS_VERSION_EXPAT" "gz"
 
 echo "-> Downloading toolchain components"
-download_source_release "$GNU_URL/binutils" "binutils-$_CROSS_VERSION_BINUTILS"          "bz2"
+download_source_release "$GNU_URL/binutils" "binutils-$_CROSS_VERSION_BINUTILS"          "bz2" "$BINUTILS_PATCHES"
 download_source_release "$GNU_URL/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$GCC_PATCHES"
 
 echo "-> Downloading system components"
