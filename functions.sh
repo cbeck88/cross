@@ -18,7 +18,7 @@ function download_source_release
   EXT="tar.$3"
   FILE="$NAME.$EXT"
   
-  cd "$_CROSS_SOURCE"
+  cd "$_CROSS_SOURCE_DIR"
 
   if [ -f "$FILE" ]
   then 
@@ -35,11 +35,11 @@ function download_source_release
     tar -xf "$FILE"
   fi
   
-  cd "$_CROSS_SOURCE/$NAME"
+  cd "$_CROSS_SOURCE_DIR/$NAME"
   for patchfile in "${@:4}"
   do
     echo "--> Applying patch $patchfile."
-    patch --forward -p0 -i "$patchfile" > "$_CROSS_LOGS/patches.log" 2>&1 # failure not checked.
+    patch --forward -p0 -i "$patchfile" > "$_CROSS_LOG_DIR/patches.log" 2>&1 # failure not checked.
   done
   
   cd "$_CROSS_DIR"

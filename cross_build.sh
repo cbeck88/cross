@@ -1,12 +1,12 @@
 #! /usr/bin/env sh
 
-echo "Loading functions"
+echo ">Loading functions"
 . ./functions.sh
 
-echo "Loading versions information"
+echo ">Loading versions information"
 . ./versions.sh
 
-echo "Performing system setup"
+echo ">Performing system setup"
 echo "-> Checking for required executables"
 check_executables "gcc" "flex" "bison" "makeinfo" "7z" "svn" "git" "make" "python" "curl" "patch"
 check_executables "python"
@@ -26,10 +26,15 @@ case `python -c 'import platform; print(platform.python_version())'` in
 esac
 echo "--> Python version 2 found with command $_CROSS_PYTHON2"
 
-echo "Setting up directories"
+echo ">Setting up directories"
 . ./directories.sh
 
 _CROSS_BUILD=`gcc -dumpmachine`
 
-echo "Downloading sources"
+echo ">Downloading sources"
 . ./download_sources.sh
+
+echo ">Building Linux multilib toolchain using glibc $_CROSS_VERSION_GLIBC and linux kernel headers $_CROSS_VERSION_LINUX."
+. ./linux_bootstrap.sh
+
+echo "All done!"
