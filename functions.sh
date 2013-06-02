@@ -3,15 +3,21 @@
 # build prerequisites check
 function check_executables
 {
+  all_programs_found=true
   for program in "$@"
   do
-    command -v "$program" >/dev/null 2>&1 || { echo >&2 "Command $program not found. Aborting"; exit 1; }
+    command -v "$program" >/dev/null 2>&1 || { not_found="$not_found\n$program"; all_programs_found=false; }
     echo "--> Command $program found."
   done
+  if ! [ $all_programs_found ]
+  then
+    echo >&2 "Programs not found: $not_found."
+    exit 1
+  fi
 }
 
 # source release downloads
-function download_source_release
+function fetch_source_release
 {
   URL="$1"
   NAME="$2"
@@ -45,7 +51,7 @@ function download_source_release
   cd "$_CROSS_DIR"
 }
 
-function download_llvm
+function fetch_llvm
 {
   VERSION="$1"
   LLVM_URL="llvm.org/releases"

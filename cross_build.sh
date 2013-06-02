@@ -31,10 +31,9 @@ echo ">Setting up directories"
 
 _CROSS_BUILD=`gcc -dumpmachine`
 
-echo ">Downloading sources"
-. ./download_sources.sh
+echo ">Fetching sources"
+. ./fetch_sources.sh
 
-echo ">Building Linux multilib toolchain using glibc $_CROSS_VERSION_GLIBC and linux kernel headers $_CROSS_VERSION_LINUX."
-. ./linux_bootstrap.sh
+
 
 echo "All done!"
