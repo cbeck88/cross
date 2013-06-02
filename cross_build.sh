@@ -1,39 +1,41 @@
 #! /usr/bin/env sh
 
-echo ">Loading functions"
+printf "> Loading functions.\n"
 . ./functions.sh
 
-echo ">Loading versions information"
+echo "> Loading versions information.\n"
 . ./versions.sh
 
-echo ">Performing system setup"
-echo "-> Checking for required executables"
+printf "> Performing system setup.\n"
+printf ">> Checking for required executables.\n"
 check_executables "gcc" "flex" "bison" "makeinfo" "7z" "svn" "git" "make" "python" "curl" "patch"
 check_executables "python"
-echo "-> Checking executable versions"
-echo "--> Python"
+printf ">> Checking executable versions.\n"
+printf ">>> Python"
 case `python -c 'import platform; print(platform.python_version())'` in
   3.?.?)
-    echo "--> 'python' is version 3. We (LLVM) need(s) version 2."
+    printf ">>> 'python' is version 3. We (LLVM) need(s) version 2.\n"
     check_executables "python2"
     _CROSS_PYTHON2="python2" ;;
   2.?.?)
-    echo "--> 'python is version 2."
+    printf ">>> 'python is version 2.\n"
     _CROSS_PYTHON2="python" ;;
   *)
-    echo "--> Could not detect Python version. Exitin."
+    printf ">>> Could not detect Python version. Exiting.\n"
     exit 1 ;;
 esac
-echo "--> Python version 2 found with command $_CROSS_PYTHON2"
+printf ">>> Python version 2 found with command $_CROSS_PYTHON2.\n"
 
-echo ">Setting up directories"
-. ./directories.sh
-
+# get build machine GCC triplet
 _CROSS_BUILD=`gcc -dumpmachine`
 
-echo ">Fetching sources"
+printf "> Setting up directories.\n"
+. ./directories.sh
+
+printf "> Fetching sources.\n"
 . ./fetch_sources.sh
 
+printf "> Building cross-compiler.\n"
+. ./build_cross_compiler.sh
 
-
-echo "All done!"
+printf "All done!\n"
