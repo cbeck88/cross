@@ -70,10 +70,11 @@ function build_with_autotools
 {
   builddir="$1"
   project="$2"
-  logdir="$3"
-  configureargs="$4"
-  makebuildargs="$5"
-  makeinstallargs="$6"
+  version="$3"
+  logdir="$4"
+  configureargs="$5"
+  makebuildargs="$6"
+  makeinstallargs="$7"
   
   mkdir -p "$builddir" && cd "$builddir"
 
