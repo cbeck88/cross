@@ -45,8 +45,10 @@ function fetch_source_release
   for patchfile in "${@:4}"
   do
     printf ">>> Applying patch $patchfile.\n"
-    printf "\-\- Patching $NAME with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
-    patch --forward -p0 -i "$patchfile" >> "$_CROSS_LOG_DIR/patches.log" 2>&1 # failure not checked.
+    printf "**** Patching $NAME in $_CROSS_SOURCE_DIR with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
+    set +e
+    patch --reject-file=- --forward -p0 -i "$patchfile" >> "$_CROSS_LOG_DIR/patches.log" 2>&1
+    set -e
   done
   
   cd "$_CROSS_DIR"
@@ -65,17 +67,120 @@ function svn_co
   URL="$2"
 }
 
+# primary toolchain build functions
+function build_prerequisites
+{
+  host="$1"
+
+  # Directories
+  mkdir -p "$_CROSS_LOG_DIR/$host"
+  prereq_build="$_CROSS_PREREQ_DIR/$host"
+  prereq_install="$prereq_build/install"
+  mkdir -p "$prereq_build" && cd "$prereq_build"
+
+  gmpconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+                    --disable-shared --enable-static \
+                    --enable-cxx"
+  build_with_autotools "gmp" "$prereq_build" "$_CROSS_VERSION_GMP" "$_CROSS_LOG_DIR/$host" \
+                      "$gmpconfigureargs" "$_CROSS_MAKE_ARGS"
+
+  mpfrconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+                     --disable-shared --enable-static \
+                     --with-gmp=$prereq_install"
+  build_with_autotools "mpfr" "$prereq_build" "$_CROSS_VERSION_MPFR" "$_CROSS_LOG_DIR/$host" \
+                      "$mpfrconfigureargs" "$_CROSS_MAKE_ARGS"
+
+  mpcconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+                    --disable-shared --enable-static \
+                    --with-gmp=$prereq_install --with-mpfr=$prereq_install"
+  build_with_autotools "mpc" "$prereq_build" "$_CROSS_VERSION_MPC" "$_CROSS_LOG_DIR/$host" \
+                      "$mpcconfigureargs" "$_CROSS_MAKE_ARGS"
+
+  islconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+                    --disable-shared --enable-static \
+                    --with-gmp-prefix=$prereq_install"
+  build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$_CROSS_LOG_DIR/$host" \
+                      "$islconfigureargs" "$_CROSS_MAKE_ARGS"
+
+  cloogconfigureargs="--host=$_CROSS_BUILD --build=$_CROSS_BUILD --prefix=$prereq_install \
+                      --disable-shared --enable-static \
+                      --with-gmp-prefix=$prereq_install --with-bits=gmp --with-isl=system"
+  build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$_CROSS_LOG_DIR/$host" \
+                       "$cloogconfigureargs" "$_CROSS_MAKE_ARGS"
+}
+
+function build_gnu_toolchain
+{
+  host="$1"
+  target="$2"
+  gccexceptions="$3"
+  builddir="$4"
+  prefix="$5"
+  prereq_install="$6"
+  
+  case $host in
+    "*-*-mingw32")
+      gnu_win32_options="--disable-win32-registry --disable-rpath --disable-werror --with-libiconv-prefix=$prereq_install" ;;
+    *)
+      gnu_win32_options= ;;
+  esac
+  
+  binutilsconfigureargs="--host=$host --build=$build --target=$target \
+                         --with-sysroot=$prefix --prefix=$prefix \
+                         --enable-64-bit-bfd --disable-multilib --disable-nls \
+                         $gnu_win32_options \
+                         $_CROSS_PACKAGE_VERSION"
+  build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix"
+  gccconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target"
+}
+
+function build_crosscompiler
+{
+  shortname="$1"
+
+  # Compiler settings
+  case "$shortname" in
+    "mingw32")
+      printf "> Building cross-compiler for 32-bit Windows.\n"
+      target="i686-w64-mingw32"
+      gccexceptions="--enable-sjlj-exceptions --disable-dw2-exceptions" ;;
+    "mingw32-dw2")
+      printf "> Building cross-compiler for 32-bit Windows (dw2).\n"
+      target="i686-w64-mingw32"
+      gccexceptions="--enable-dw2-exceptions --disable-sjlj-exceptions" ;;
+    "mingw64")
+      printf "> Building cross-compiler for 64-bit Windows.\n"
+      target="x86_64-w64-mingw32"
+      case $_CROSS_GCC_VERSION in
+        "4.[5-7]*")
+          gccexceptions="--enable-sjlj-exceptions --disable-dw2-exceptions" ;;
+        *)
+          gccexceptions="--enable-seh-exceptions --disable-sjlj-exceptions" ;;
+      esac
+  esac
+  
+  printf ">> Building GCC prerequisites.\n"
+  build_prerequisites "$_CROSS_BUILD"
+  
+  # Toolchain
+  toolchain_build="$_CROSS_BUILD_DIR/$host/$target"
+  toolchain_install="$toolchain_build/$shortname"
+  build_gnu_toolchain "$_CROSS_BUILD" "$target" "$gccexceptions" "$toolchain_build" "$toolchain_install" "$prereq_install"
+}
+
 # build functions
 function build_with_autotools
 {
-  builddir="$1"
-  project="$2"
+  project="$1"
+  builddir="$2/$project"
   version="$3"
-  logdir="$4"
+  logdir="$4/$project"
   configureargs="$5"
   makebuildargs="$6"
   makeinstallargs="$7"
   
+  mkdir -p "${logdir}"
   mkdir -p "$builddir" && cd "$builddir"
 
   if [ -f "$builddir/configure.marker" ]
@@ -83,19 +188,19 @@ function build_with_autotools
     printf ">>> $project already configured.\n"
   else
     printf ">>> Configuring $project.\n"
-    . "$_CROSS_SOURCE_DIR/$src/configure" "$configureargs" > "$logdir/configure.log" 2>&1 \
-      || { printf "Failure configuring $project. Check $logdir/configure.log for details.\n"; exit 1; }
+    sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
+       || { printf "Failure configuring $project. Check $logdir/configure.log for details.\n"; exit 1; }
   fi
   touch "$builddir/configure.marker"
-  
+
   mkdir -p "$builddir" && cd "$builddir"
 
   if [ -f "$builddir/build.marker" ]
   then
     printf ">>> $project already built.\n"
   else
-    printf ">>> Building project.\n"
-    make "$makebuildargs" > "$logdir/build.log" > "$logdir/build.log" \
+    printf ">>> Building $project.\n"
+    make $makebuildargs > "$logdir/build.log" > "$logdir/build.log" 2>&1 \
       || { printf "Failure building $project. Check $logdir/build.log for details.\n"; exit 1; }
   fi
   touch "$builddir/build.marker"
@@ -104,11 +209,13 @@ function build_with_autotools
   then
     printf ">>> $project already installed.\n"
   else
-    printf ">>> Building project.\n"
-    make "$makebuildargs" > "$logdir/install.log" > "$logdir/install.log" \
+    printf ">>> Installing $project.\n"
+    make ${makeinstallargs} install > "$logdir/install.log" > "$logdir/install.log" 2>&1 \
       || { printf "Failure installing $project. Check $logdir/install.log for details.\n"; exit 1; }
   fi
   touch "$builddir/install.marker"
+  
+  cd "$_CROSS_DIR"
 }
     
   

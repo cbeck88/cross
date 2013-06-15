@@ -1,7 +1,5 @@
-Index: lib/AST/ItaniumCXXABI.cpp
-===================================================================
---- lib/AST/ItaniumCXXABI.cpp   (revision 183632)
-+++ lib/AST/ItaniumCXXABI.cpp   (working copy)
+--- lib/AST/ItaniumCXXABI.cpp
++++ lib/AST/ItaniumCXXABI.cpp
 @@ -45,7 +45,11 @@
    }
 
