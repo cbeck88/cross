@@ -1,8 +1,8 @@
 #! /usr/bin/env sh
 
 # build prerequisites check
-function check_executables
-{
+check_executables()
+(
   all_programs_found=true
   for program in "$@"
   do
@@ -14,62 +14,62 @@ function check_executables
     printf >&2 "Programs not found: $not_found.\n"
     exit 1
   fi
-}
+)
 
 # source release downloads
-function fetch_source_release
-{
-  URL="$1"
-  NAME="$2"
-  EXT="tar.$3"
-  FILE="$NAME.$EXT"
+fetch_source_release()
+(
+  url="$1"
+  name="$2"
+  ext="tar.$3"
+  file="$name.$ext"
   
   cd "$_CROSS_SOURCE_DIR"
 
-  if [ -f "$FILE" ]
+  if [ -f "$file" ]
   then 
-    printf ">>> $FILE already downloaded.\n"
+    printf ">>> $file already downloaded.\n"
   else
-    printf ">>> Downloading $FILE from $URL/$FILE.\n"
-    curl -# -L -o "$FILE" "$URL/$FILE" || { printf "Failure downloading from $URL/$FILE.\n"; exit 1; }
+    printf ">>> Downloading $file from $url/$file.\n"
+    curl -# -L -o "$file" "$url/$file" || { printf "Failure downloading from $url/$file.\n"; exit 1; }
   fi
-  if [ -d "$NAME" ]
+  if [ -d "$name" ]
   then
-    printf ">>> $FILE already extracted.\n"
+    printf ">>> $file already extracted.\n"
   else
-    printf ">>> Extracting $FILE.\n"
-    tar -xf "$FILE"
+    printf ">>> Extracting $file.\n"
+    tar -xf "$file"
   fi
-  
-  cd "$_CROSS_SOURCE_DIR/$NAME"
+
+  cd "$_CROSS_SOURCE_DIR/$name"
   for patchfile in "${@:4}"
   do
     printf ">>> Applying patch $patchfile.\n"
-    printf "**** Patching $NAME in $_CROSS_SOURCE_DIR with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
+    printf "**** Patching $name in $_CROSS_SOURCE_DIR with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
     set +e
     patch --reject-file=- --forward -p0 -i "$patchfile" >> "$_CROSS_LOG_DIR/patches.log" 2>&1
     set -e
   done
   
   cd "$_CROSS_DIR"
-}
+)
 
-function fetch_llvm
-{
-  VERSION="$1"
-  LLVM_URL="llvm.org/releases"
-}
+fetch_llvm()
+(
+  version="$1"
+  url="llvm.org/releases"
+)
 
 # Version control downloads
-function svn_co
-{
-  PROJECT="$1"
-  URL="$2"
-}
+svn_co()
+(
+  project="$1"
+  url="$2"
+)
 
 # primary toolchain build functions
-function build_prerequisites
-{
+build_prerequisites()
+(
   host="$1"
 
   # Directories
@@ -78,25 +78,34 @@ function build_prerequisites
   prereq_install="$prereq_build/install"
   mkdir -p "$prereq_build" && cd "$prereq_build"
 
-  gmpconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+  gmpconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                     --disable-shared --enable-static \
                     --enable-cxx"
   build_with_autotools "gmp" "$prereq_build" "$_CROSS_VERSION_GMP" "$_CROSS_LOG_DIR/$host" \
                       "$gmpconfigureargs" "$_CROSS_MAKE_ARGS"
 
-  mpfrconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+  mpfrconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                      --disable-shared --enable-static \
                      --with-gmp=$prereq_install"
   build_with_autotools "mpfr" "$prereq_build" "$_CROSS_VERSION_MPFR" "$_CROSS_LOG_DIR/$host" \
                       "$mpfrconfigureargs" "$_CROSS_MAKE_ARGS"
 
-  mpcconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+  mpcconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                     --disable-shared --enable-static \
                     --with-gmp=$prereq_install --with-mpfr=$prereq_install"
   build_with_autotools "mpc" "$prereq_build" "$_CROSS_VERSION_MPC" "$_CROSS_LOG_DIR/$host" \
                       "$mpcconfigureargs" "$_CROSS_MAKE_ARGS"
 
-  islconfigureargs="--host=$host --build=$host --prefix=$prereq_install \
+  case "$_CROSS_GCC_VERSION" in
+    "4.5*"|"4.6*"|"4.7*")
+      pplconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
+                        --disable-shared --enable-static \
+                        --with-gmp=$prereq_install"
+      build_with_autotools "ppl" "$prereq_build" "$_CROSS_VERSION_PPL" "$_CROSS_LOG_DIR/$host" \
+                           "$pplconfigureargs" "$_CROSS_MAKE_ARGS" ;;
+  esac
+
+  islconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                     --disable-shared --enable-static \
                     --with-gmp-prefix=$prereq_install"
   build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$_CROSS_LOG_DIR/$host" \
@@ -107,17 +116,29 @@ function build_prerequisites
                       --with-gmp-prefix=$prereq_install --with-bits=gmp --with-isl=system"
   build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$_CROSS_LOG_DIR/$host" \
                        "$cloogconfigureargs" "$_CROSS_MAKE_ARGS"
-}
 
-function build_gnu_toolchain
-{
+  case $host in
+    "*-*-mingw32"|"*-*-cygwin")
+      libiconvconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
+                             --disable-shared --enable-static"
+      build_with_autotools "libiconv" "$prereq_build" "$_CROSS_VERSION_LIBICONV" "$_CROSS_LOG_DIR/$host" \
+                           "$libiconvconfigureargs" "$_CROSS_MAKE_ARGS"
+      expatconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
+                          --disable-shared --enable-static"
+      build_with_autotools "expat" "$prereq_build" "$_CROSS_VERSION_EXPAT" "$_CROSS_LOG_DIR/$host" \
+                           "$expatconfigureargs" "$_CROSS_MAKE_ARGS" ;;
+  esac
+)
+
+build_gnu_toolchain()
+(
   host="$1"
   target="$2"
   gccexceptions="$3"
   builddir="$4"
   prefix="$5"
   prereq_install="$6"
-  
+
   case $host in
     "*-*-mingw32")
       gnu_win32_options="--disable-win32-registry --disable-rpath --disable-werror --with-libiconv-prefix=$prereq_install" ;;
@@ -125,19 +146,42 @@ function build_gnu_toolchain
       gnu_win32_options= ;;
   esac
   
-  binutilsconfigureargs="--host=$host --build=$build --target=$target \
+  echo $_CROSS_PACKAGE_VERSION
+  binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                          --with-sysroot=$prefix --prefix=$prefix \
                          --enable-64-bit-bfd --disable-multilib --disable-nls \
                          $gnu_win32_options \
                          $_CROSS_PACKAGE_VERSION"
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "$_CROSS_LOG_DIR/$host/$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix"
-  gccconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target"
-}
+#  case "$_CROSS_VERSION_GCC" in
+#     "4.5*"|"4.6*|4.7*"|"4.8*")
+#       printf ">> GCC 4.[5-7]\n"
+#       gcchostlibstdcxx="" ;;
+#   esac
+  gccconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
+                    --with-sysroot=$prefix --prefix=$prefix \
+                    --with-gmp=$prereq_install --with-mpfr=$prereq_install --with-mpc=$prereq_install \
+                    --with-cloog=$prereq_install --enable-cloog-backend=isl --with-isl=$prereq_install \
+                    --with-host-libstdcxx=-lstdc++ \
+                    --enable-shared --enable-static --enable-plugins \
+                    --disable-multilib --enable-libgomp \
+                    --enable-threads=win32 $gccexceptions \
+                    --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
+                    --enable-fully-dynamic-string --enable-libstdcxx-time \
+                    --disable-nls --disable-werror --enable-checking=release \
+                    --with-gnu-as --with-gnu-ld $gnu_win32_options $_CROSS_PACKAGE_VERSION \
+                    LDFLAGS=-static" 
+  # might need special function... might not
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap"
+  
+)
 
-function build_crosscompiler
-{
+build_crosscompiler()
+(
   shortname="$1"
+  host="$_CROSS_BUILD"
 
   # Compiler settings
   case "$shortname" in
@@ -161,17 +205,19 @@ function build_crosscompiler
   esac
   
   printf ">> Building GCC prerequisites.\n"
-  build_prerequisites "$_CROSS_BUILD"
+  build_prerequisites "$host"
+  prereq_install="$_CROSS_PREREQ_DIR/$host/install"
   
   # Toolchain
   toolchain_build="$_CROSS_BUILD_DIR/$host/$target"
   toolchain_install="$toolchain_build/$shortname"
+  echo $prereq_install
   build_gnu_toolchain "$_CROSS_BUILD" "$target" "$gccexceptions" "$toolchain_build" "$toolchain_install" "$prereq_install"
-}
+)
 
 # build functions
-function build_with_autotools
-{
+build_with_autotools()
+(
   project="$1"
   builddir="$2/$project"
   version="$3"
@@ -179,8 +225,9 @@ function build_with_autotools
   configureargs="$5"
   makebuildargs="$6"
   makeinstallargs="$7"
+  buildstep="$8"
   
-  mkdir -p "${logdir}"
+  mkdir -p "$logdir"
   mkdir -p "$builddir" && cd "$builddir"
 
   if [ -f "$builddir/configure.marker" ]
@@ -188,6 +235,7 @@ function build_with_autotools
     printf ">>> $project already configured.\n"
   else
     printf ">>> Configuring $project.\n"
+    echo sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs
     sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
        || { printf "Failure configuring $project. Check $logdir/configure.log for details.\n"; exit 1; }
   fi
@@ -195,27 +243,25 @@ function build_with_autotools
 
   mkdir -p "$builddir" && cd "$builddir"
 
-  if [ -f "$builddir/build.marker" ]
+  if [ -f "$builddir/build$buildstep.marker" ]
   then
     printf ">>> $project already built.\n"
   else
     printf ">>> Building $project.\n"
-    make $makebuildargs > "$logdir/build.log" > "$logdir/build.log" 2>&1 \
-      || { printf "Failure building $project. Check $logdir/build.log for details.\n"; exit 1; }
+    make $makebuildargs > "$logdir/build.log" > "$logdir/build$buildstep.log" 2>&1 \
+      || { printf "Failure building $project. Check $logdir/build$buildstep.log for details.\n"; exit 1; }
   fi
-  touch "$builddir/build.marker"
+  touch "$builddir/build$buildstep.marker"
   
-  if [ -f "$builddir/install.marker" ]
+  if [ -f "$builddir/install$buildstep.marker" ]
   then
     printf ">>> $project already installed.\n"
   else
     printf ">>> Installing $project.\n"
-    make ${makeinstallargs} install > "$logdir/install.log" > "$logdir/install.log" 2>&1 \
-      || { printf "Failure installing $project. Check $logdir/install.log for details.\n"; exit 1; }
+    make ${makeinstallargs} install > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
+      || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
   fi
-  touch "$builddir/install.marker"
+  touch "$builddir/install$buildstep.marker"
   
   cd "$_CROSS_DIR"
-}
-    
-  
+)

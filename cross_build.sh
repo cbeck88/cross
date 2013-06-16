@@ -7,7 +7,6 @@ echo $_CROSS_DIR
 printf "> Fetching sources.\n"
 . ./fetch_sources.sh
 
-echo `pwd`
 printf "> Building cross-compiler.\n"
 build_crosscompiler "mingw32"
 

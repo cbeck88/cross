@@ -10,6 +10,7 @@ EXPAT_URL="http://sourceforge.net/projects/expat/files/expat/$_CROSS_VERSION_EXP
 LINUX_URL="ftp://ftp.nluug.nl/mirror/os/Linux/system/kernel/v3.x"
 
 # patches
+rm -f "$_CROSS_LOG_DIR/patches.log"
 PPL_PATCHES="$_CROSS_PATCH_DIR/ppl-gmp-5.1.patch.txt"
 BINUTILS_PATCHES="$_CROSS_PATCH_DIR/binutils-texinfo-5.0.patch.txt"
 case "$_CROSS_VERSION_GCC" in
@@ -20,7 +21,7 @@ case "$_CROSS_VERSION_GCC" in
 esac
 MAKE_PATCHES="$_CROSS_PATCH_DIR/make-win32.patch.txt"
 
-echo ">> Downloading prerequisite libraries"
+printf ">> Downloading prerequisite libraries.\n"
 fetch_source_release "$GNU_URL/gmp"  "gmp-$_CROSS_VERSION_GMP"     "bz2"
 fetch_source_release "$GNU_URL/mpfr" "mpfr-$_CROSS_VERSION_MPFR"   "xz"
 fetch_source_release "$GNU_URL/mpc"  "mpc-$_CROSS_VERSION_MPC"     "gz"
@@ -29,10 +30,11 @@ fetch_source_release "$ISL_URL"      "isl-$_CROSS_VERSION_ISL"     "bz2"
 fetch_source_release "$CLOOG_URL"    "cloog-$_CROSS_VERSION_CLOOG" "gz"
 fetch_source_release "$EXPAT_URL"    "expat-$_CROSS_VERSION_EXPAT" "gz"
 
-echo ">> Downloading toolchain components"
+
+printf ">> Downloading toolchain components.\n"
 fetch_source_release "$GNU_URL/binutils" "binutils-$_CROSS_VERSION_BINUTILS"          "bz2" "$BINUTILS_PATCHES"
 fetch_source_release "$GNU_URL/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$GCC_PATCHES"
 
-echo ">> Downloading extra toolchain components"
+printf ">> Downloading extra toolchain components.\n"
 fetch_source_release "$GNU_URL/gdb"  "gdb-$_CROSS_VERSION_GDB"   "bz2"
 fetch_source_release "$GNU_URL/make" "make-$_CROSS_VERSION_MAKE" "bz2" "$MAKE_PATCHES"
