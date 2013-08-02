@@ -54,6 +54,24 @@ fetch_source_release()
   cd "$_CROSS_DIR"
 )
 
+fetch_source_svn()
+(
+  url="$1"
+  subdir="$2"
+  checkoutdir="$_CROSS_SOURCE_DIR/$3"
+  
+  if [ -d "$checkoutdir" ]
+  then
+    cd "$checkoutdir"
+    existingurl=`svn info | grep 'Repository Root' | awk '{print $NF}'`
+    printf "$existingurl"
+  else
+    mkdir -p "$checkoutdir"
+    cd "$checkoutdir"
+    svn co "$url/$subdir" "$checkoutdir" >> "$_CROSS_LOG_DIR/$3-svn" 2>&1 || { printf "Failure checking out $3."; exit 1; }
+  fi
+)
+
 fetch_llvm()
 (
   version="$1"
@@ -97,7 +115,7 @@ build_prerequisites()
                       "$mpcconfigureargs" "$_CROSS_MAKE_ARGS"
 
   case "$_CROSS_GCC_VERSION" in
-    "4.5*"|"4.6*"|"4.7*")
+    4.5*|4.6*|4.7*)
       pplconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                         --disable-shared --enable-static \
                         --with-gmp=$prereq_install"
@@ -118,7 +136,7 @@ build_prerequisites()
                        "$cloogconfigureargs" "$_CROSS_MAKE_ARGS"
 
   case $host in
-    "*-*-mingw32"|"*-*-cygwin")
+    *-*-mingw32|*-*-cygwin)
       libiconvconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                              --disable-shared --enable-static"
       build_with_autotools "libiconv" "$prereq_build" "$_CROSS_VERSION_LIBICONV" "$_CROSS_LOG_DIR/$host" \
@@ -130,7 +148,7 @@ build_prerequisites()
   esac
 )
 
-build_gnu_toolchain()
+build_mingw_toolchain()
 (
   host="$1"
   target="$2"
@@ -140,13 +158,13 @@ build_gnu_toolchain()
   prereq_install="$6"
 
   case $host in
-    "*-*-mingw32")
+    *-*-mingw32)
       gnu_win32_options="--disable-win32-registry --disable-rpath --disable-werror --with-libiconv-prefix=$prereq_install" ;;
     *)
       gnu_win32_options= ;;
   esac
   
-  echo $_CROSS_PACKAGE_VERSION
+  # Binutils
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                          --with-sysroot=$prefix --prefix=$prefix \
                          --enable-64-bit-bfd --disable-multilib --disable-nls \
@@ -155,7 +173,7 @@ build_gnu_toolchain()
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "$_CROSS_LOG_DIR/$host/$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix"
 #  case "$_CROSS_VERSION_GCC" in
-#     "4.5*"|"4.6*|4.7*"|"4.8*")
+#     4.5*|4.6*|4.7*)
 #       printf ">> GCC 4.[5-7]\n"
 #       gcchostlibstdcxx="" ;;
 #   esac
@@ -172,10 +190,10 @@ build_gnu_toolchain()
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld $gnu_win32_options $_CROSS_PACKAGE_VERSION \
                     LDFLAGS=-static" 
-  # might need special function... might not
-  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_MINGWW64" "$_CROSS_LOG_DIR/$host/$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap"
   
+  # MinGW-w64 CRT
 )
 
 build_crosscompiler()
@@ -185,19 +203,19 @@ build_crosscompiler()
 
   # Compiler settings
   case "$shortname" in
-    "mingw32")
+    mingw32)
       printf "> Building cross-compiler for 32-bit Windows.\n"
       target="i686-w64-mingw32"
       gccexceptions="--enable-sjlj-exceptions --disable-dw2-exceptions" ;;
-    "mingw32-dw2")
+    mingw32-dw2)
       printf "> Building cross-compiler for 32-bit Windows (dw2).\n"
       target="i686-w64-mingw32"
       gccexceptions="--enable-dw2-exceptions --disable-sjlj-exceptions" ;;
-    "mingw64")
+    mingw64)
       printf "> Building cross-compiler for 64-bit Windows.\n"
       target="x86_64-w64-mingw32"
       case $_CROSS_GCC_VERSION in
-        "4.[5-7]*")
+        4.[5-7]*)
           gccexceptions="--enable-sjlj-exceptions --disable-dw2-exceptions" ;;
         *)
           gccexceptions="--enable-seh-exceptions --disable-sjlj-exceptions" ;;
@@ -211,8 +229,30 @@ build_crosscompiler()
   # Toolchain
   toolchain_build="$_CROSS_BUILD_DIR/$host/$target"
   toolchain_install="$toolchain_build/$shortname"
-  echo $prereq_install
-  build_gnu_toolchain "$_CROSS_BUILD" "$target" "$gccexceptions" "$toolchain_build" "$toolchain_install" "$prereq_install"
+  mkdir -p "$toolchain_install/mingw/include"
+  
+  # MinGW-w64 v3+ changed install prefix meaning
+  case "$_CROSS_VERSION_MINGW_W64" in
+    trunk|3.*)
+      mingw_w64prefix="$toolchain_install/$target" ;;
+    1.*|2.*)
+      mingw_w64prefix="$toolchain_install" ;;
+    *)
+      printf "Error: unknown MinGW-w64 version: $_CROSS_VERSION_MINGW_W64. Check versions.sh.\n"
+      exit 1 ;;
+  esac
+  
+  # mingw-w64 headers
+  #TODO add option for --enable-secure-api, but this breaks code on WinXP 32-bit!!
+  mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
+                                 --prefix=$mingw_w64prefix --enable-sdk=all"
+  build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install"
+
+  build_mingw_toolchain "$_CROSS_BUILD" "$target" "$gccexceptions" "$toolchain_build" "$toolchain_install" "$prereq_install"
+  
+  # cleanup
+  rm -rf "$toolchain_install/mingw"
 )
 
 # build functions
@@ -224,9 +264,14 @@ build_with_autotools()
   logdir="$4/$project"
   configureargs="$5"
   makebuildargs="$6"
-  makeinstallargs="$7"
+  if [ -z "$7" ]
+  then
+    makeinstallargs="install"
+  else
+    makeinstallargs="$7"
+  fi
   buildstep="$8"
-  
+
   mkdir -p "$logdir"
   mkdir -p "$builddir" && cd "$builddir"
 
@@ -234,8 +279,8 @@ build_with_autotools()
   then
     printf ">>> $project already configured.\n"
   else
-    printf ">>> Configuring $project.\n"
-    echo sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs
+    printf ">>> Configuring $project:\n"
+    printf "sh $_CROSS_SOURCE_DIR/$project-$version/configure $configureargs"
     sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
        || { printf "Failure configuring $project. Check $logdir/configure.log for details.\n"; exit 1; }
   fi
@@ -258,7 +303,7 @@ build_with_autotools()
     printf ">>> $project already installed.\n"
   else
     printf ">>> Installing $project.\n"
-    make ${makeinstallargs} install > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
+    make ${makeinstallargs} > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
       || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
   fi
   touch "$builddir/install$buildstep.marker"

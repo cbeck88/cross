@@ -7,7 +7,8 @@ ISL_URL="ftp://ftp.linux.student.kuleuven.be/pub/people/skimo/isl"
 CLOOG_URL="http://www.bastoul.net/cloog/pages/download/count.php3?url=."
 EXPAT_URL="http://sourceforge.net/projects/expat/files/expat/$_CROSS_VERSION_EXPAT"
 
-LINUX_URL="ftp://ftp.nluug.nl/mirror/os/Linux/system/kernel/v3.x"
+MINGW_W64_URL="http://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release"
+MINGW_W64_SVN="svn://svn.code.sf.net/p/mingw-w64/code"
 
 # patches
 rm -f "$_CROSS_LOG_DIR/patches.log"
@@ -30,6 +31,13 @@ fetch_source_release "$ISL_URL"      "isl-$_CROSS_VERSION_ISL"     "bz2"
 fetch_source_release "$CLOOG_URL"    "cloog-$_CROSS_VERSION_CLOOG" "gz"
 fetch_source_release "$EXPAT_URL"    "expat-$_CROSS_VERSION_EXPAT" "gz"
 
+printf ">> Downloading MinGW-w64 goodies.\n"
+if [ "$_CROSS_VERSION_MINGW_W64" = "trunk" ]
+then
+  fetch_source_svn "$MINGW_W64_SVN" "trunk" "mingw-w64-trunk"
+else
+  fetch_source_release "$MINGW_W64_URL" "mingw-w64-v$_CROSS_VERSION_MINGW_W64" "gz"
+fi
 
 printf ">> Downloading toolchain components.\n"
 fetch_source_release "$GNU_URL/binutils" "binutils-$_CROSS_VERSION_BINUTILS"          "bz2" "$BINUTILS_PATCHES"
