@@ -167,7 +167,7 @@ build_mingw_toolchain()
   # Binutils
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                          --with-sysroot=$prefix --prefix=$prefix \
-                         --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror\
+                         --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror \
                          $gnu_win32_options \
                          $_CROSS_PACKAGE_VERSION"
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "$_CROSS_LOG_DIR/$host/$target" \
@@ -188,7 +188,8 @@ build_mingw_toolchain()
                     --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
-                    --with-gnu-as --with-gnu-ld $gnu_win32_options $_CROSS_PACKAGE_VERSION \
+                    --with-gnu-as --with-gnu-ld \
+                    $gnu_win32_options $_CROSS_PACKAGE_VERSION \
                     LDFLAGS=-static"
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap"
@@ -196,11 +197,19 @@ build_mingw_toolchain()
   printf ">> Adding cross tools to PATH.\n"
   export PATH="$prefix/bin":$PATH
   
-  # MinGW-w64 CRT
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                              --prefix=$mingw_w64prefix --enable-sdk=all --enable-wildcard"
   build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_LOG_DIR/$host/$target" \
-                       "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install"
+                       "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-crt"
+  
+  winpthreadsconfigureargs="--host=$target --build=$build \
+                            --prefix=$prefix/$target \
+                            --enable-shared --enable-static"
+  build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-libraries/winpthreads" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-winpthreads"
+  
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS"
 )
 
 build_crosscompiler()
@@ -254,7 +263,7 @@ build_crosscompiler()
   mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                                  --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
   build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
-                       "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install"
+                       "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-headers"
 
   build_mingw_toolchain "$_CROSS_BUILD" "$target" "$gccexceptions" "$toolchain_build" "$toolchain_install" "$prereq_install"
   
@@ -282,24 +291,24 @@ build_with_autotools()
   mkdir -p "$logdir"
   mkdir -p "$builddir" && cd "$builddir"
 
-  if [ -f "$builddir/configure.marker" ]
+  if [ -f "$builddir/configure$buildstep.marker" ]
   then
-    printf ">>> $project already configured.\n"
+    printf ">>> $project$buildstep already configured.\n"
   else
-    printf ">>> Configuring $project:\n"
+    printf ">>> Configuring $project$buildstep:\n"
 #     printf "sh $_CROSS_SOURCE_DIR/$project-$version/configure $configureargs"
     sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
-       || { printf "Failure configuring $project. Check $logdir/configure.log for details.\n"; exit 1; }
+       || { printf "Failure configuring $project$buildstep. Check $logdir/configure.log for details.\n"; exit 1; }
   fi
-  touch "$builddir/configure.marker"
+  touch "$builddir/configure$buildstep.marker"
 
   mkdir -p "$builddir" && cd "$builddir"
 
   if [ -f "$builddir/build$buildstep.marker" ]
   then
-    printf ">>> $project already built.\n"
+    printf ">>> $project$buildstep already built.\n"
   else
-    printf ">>> Building $project.\n"
+    printf ">>> Building $project$buildstep.\n"
     make $makebuildargs > "$logdir/build.log" > "$logdir/build$buildstep.log" 2>&1 \
       || { printf "Failure building $project. Check $logdir/build$buildstep.log for details.\n"; exit 1; }
   fi
