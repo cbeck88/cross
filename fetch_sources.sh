@@ -3,7 +3,7 @@
 # URLs
 GNU_URL="ftp://ftp.nluug.nl/mirror/gnu"
 PPL_URL="ftp://ftp.cs.unipr.it/pub/ppl/releases/$_CROSS_VERSION_PPL"
-ISL_URL="ftp://ftp.linux.student.kuleuven.be/pub/people/skimo/isl"
+ISL_URL="ftp://gcc.gnu.org/pub/gcc/infrastructure" #"http://isl.gforge.inria.fr" #"ftp://ftp.linux.student.kuleuven.be/pub/people/skimo/isl"
 CLOOG_URL="http://www.bastoul.net/cloog/pages/download/count.php3?url=."
 EXPAT_URL="http://sourceforge.net/projects/expat/files/expat/$_CROSS_VERSION_EXPAT"
 
@@ -36,7 +36,7 @@ if [ "$_CROSS_VERSION_MINGW_W64" = "trunk" ]
 then
   fetch_source_svn "$MINGW_W64_SVN" "trunk" "mingw-w64-trunk"
 else
-  fetch_source_release "$MINGW_W64_URL" "mingw-w64-v$_CROSS_VERSION_MINGW_W64" "gz"
+  fetch_source_release "$MINGW_W64_URL" "mingw-w64-$_CROSS_VERSION_MINGW_W64" "bz2"
 fi
 
 printf ">> Downloading toolchain components.\n"

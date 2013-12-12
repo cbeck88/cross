@@ -167,7 +167,7 @@ build_mingw_toolchain()
   # Binutils
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                          --with-sysroot=$prefix --prefix=$prefix \
-                         --enable-64-bit-bfd --disable-multilib --disable-nls \
+                         --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror\
                          $gnu_win32_options \
                          $_CROSS_PACKAGE_VERSION"
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "$_CROSS_LOG_DIR/$host/$target" \
@@ -189,11 +189,18 @@ build_mingw_toolchain()
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld $gnu_win32_options $_CROSS_PACKAGE_VERSION \
-                    LDFLAGS=-static" 
-  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_MINGWW64" "$_CROSS_LOG_DIR/$host/$target" \
+                    LDFLAGS=-static"
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap"
   
+  printf ">> Adding cross tools to PATH.\n"
+  export PATH="$prefix/bin":$PATH
+  
   # MinGW-w64 CRT
+  mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
+                             --prefix=$mingw_w64prefix --enable-sdk=all --enable-wildcard"
+  build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install"
 )
 
 build_crosscompiler()
@@ -233,9 +240,9 @@ build_crosscompiler()
   
   # MinGW-w64 v3+ changed install prefix meaning
   case "$_CROSS_VERSION_MINGW_W64" in
-    trunk|3.*)
+    trunk|v3.*)
       mingw_w64prefix="$toolchain_install/$target" ;;
-    1.*|2.*)
+    v1.*|v2.*)
       mingw_w64prefix="$toolchain_install" ;;
     *)
       printf "Error: unknown MinGW-w64 version: $_CROSS_VERSION_MINGW_W64. Check versions.sh.\n"
@@ -245,7 +252,7 @@ build_crosscompiler()
   # mingw-w64 headers
   #TODO add option for --enable-secure-api, but this breaks code on WinXP 32-bit!!
   mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
-                                 --prefix=$mingw_w64prefix --enable-sdk=all"
+                                 --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
   build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
                        "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install"
 
@@ -280,7 +287,7 @@ build_with_autotools()
     printf ">>> $project already configured.\n"
   else
     printf ">>> Configuring $project:\n"
-    printf "sh $_CROSS_SOURCE_DIR/$project-$version/configure $configureargs"
+#     printf "sh $_CROSS_SOURCE_DIR/$project-$version/configure $configureargs"
     sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
        || { printf "Failure configuring $project. Check $logdir/configure.log for details.\n"; exit 1; }
   fi
