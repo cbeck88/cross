@@ -234,7 +234,9 @@ build_crosscompiler()
         4.[5-7]*)
           gccexceptions="--enable-sjlj-exceptions --disable-dw2-exceptions" ;;
         *)
-          gccexceptions="--enable-seh-exceptions --disable-sjlj-exceptions" ;;
+          # messes up GCC 4.8.2 configure so that it complains dw2 EH is not available for some reason.
+          #gccexceptions="--disable-sjlj-exceptions --disable-dw2-exceptions --enable-seh-exceptions"
+          ;;
       esac
   esac
   
@@ -259,7 +261,6 @@ build_crosscompiler()
   esac
   
   # mingw-w64 headers
-  #TODO add option for --enable-secure-api, but this breaks code on WinXP 32-bit!!
   mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                                  --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
   build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
@@ -296,7 +297,6 @@ build_with_autotools()
     printf ">>> $project$buildstep already configured.\n"
   else
     printf ">>> Configuring $project$buildstep:\n"
-#     printf "sh $_CROSS_SOURCE_DIR/$project-$version/configure $configureargs"
     sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
        || { printf "Failure configuring $project$buildstep. Check $logdir/configure.log for details.\n"; exit 1; }
   fi
@@ -316,9 +316,9 @@ build_with_autotools()
   
   if [ -f "$builddir/install$buildstep.marker" ]
   then
-    printf ">>> $project already installed.\n"
+    printf ">>> $project$buildstep already installed.\n"
   else
-    printf ">>> Installing $project.\n"
+    printf ">>> Installing $project$buildstep.\n"
     make ${makeinstallargs} > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
       || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
   fi
