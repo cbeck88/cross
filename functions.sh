@@ -259,7 +259,7 @@ build_mingw_toolchain()
                     --enable-shared --enable-static --enable-plugins \
                     --disable-multilib --enable-libgomp \
                     $gccabioptions \
-                    --enable-languages=c,lto,c++,objc,obj-c++,fortran,java,ada \
+                    --enable-languages=c,lto \
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \
@@ -286,7 +286,7 @@ build_mingw_toolchain()
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-winpthreads"
   
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
-                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS"
+                       "$gccconfigureargs --enable-languages=c,lto,c++,objc,obj-c++,fortran,java,ada" "$_CROSS_MAKE_ARGS"
 )
 
 # build functions
