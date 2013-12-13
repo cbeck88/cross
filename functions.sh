@@ -86,6 +86,32 @@ svn_co()
 )
 
 # primary toolchain build functions
+
+build_crosscompiler()
+(
+  shortname="$1"
+  if [ -z "$2" ]
+  then
+    host="$_CROSS_BUILD"
+  else
+    host="$2"
+  fi
+
+  printf ">> Building GCC prerequisites.\n"
+  build_prerequisites "$host"
+  prereq_install="$_CROSS_PREREQ_DIR/$host/install"
+  
+  # Toolchain
+  toolchain_build="$_CROSS_BUILD_DIR/$host/$shortname"
+  toolchain_install="$toolchain_build/$shortname"
+  mkdir -p "$toolchain_install/mingw/include"
+
+  build_mingw_toolchain "$host" "$shortname" "$toolchain_build" "$toolchain_install" "$prereq_install" "$mingw_w64prefix"
+  
+  # cleanup
+  rm -rf "$toolchain_install/mingw"
+)
+
 build_prerequisites()
 (
   host="$1"
@@ -151,11 +177,49 @@ build_prerequisites()
 build_mingw_toolchain()
 (
   host="$1"
-  target="$2"
-  gccexceptions="$3"
-  builddir="$4"
-  prefix="$5"
-  prereq_install="$6"
+  shortname="$2"
+  builddir="$3"
+  prefix="$4"
+  prereq_install="$5"
+  mingw_w64prefix="$6"
+  
+  # Compiler settings
+  #TODO make selectable and working: winpthreads build complains that it can't link to -lpthread :-(
+  gccabioptions="--enable-threads=posix"
+  case "$shortname" in
+    mingw32)
+      printf "> Building cross-compiler for 32-bit Windows.\n"
+      target="i686-w64-mingw32"
+      gccabioptions="$gccabioptions --enable-sjlj-exceptions --disable-dw2-exceptions" ;;
+    mingw32-dw2)
+      printf "> Building cross-compiler for 32-bit Windows (dw2).\n"
+      target="i686-w64-mingw32"
+      gccabioptions="$gccabioptions --enable-dw2-exceptions --disable-sjlj-exceptions" ;;
+    mingw64)
+      printf "> Building cross-compiler for 64-bit Windows.\n"
+      target="x86_64-w64-mingw32"
+      case $_CROSS_GCC_VERSION in
+        4.[5-7]*)
+          gccabioptions="$gccabioptions --enable-sjlj-exceptions --disable-dw2-exceptions" ;;
+        *)
+          # messes up GCC 4.8.2 configure so that it complains dw2 EH is not available for some reason.
+          #gccabioptions="$gccabioptions --disable-sjlj-exceptions --disable-dw2-exceptions --enable-seh-exceptions"
+          ;;
+      esac ;;
+    *)
+      printf "Invalid shortname \'$shortname\' passed to build_crosscompiler.\n"; exit 1; ;;
+  esac
+  
+  # MinGW-w64 v3+ changed install prefix meaning
+  case "$_CROSS_VERSION_MINGW_W64" in
+    trunk|v3.*)
+      mingw_w64prefix="$prefix/$target" ;;
+    v1.*|v2.*)
+      mingw_w64prefix="$prefix" ;;
+    *)
+      printf "Error: unknown MinGW-w64 version: $_CROSS_VERSION_MINGW_W64. Check versions.sh.\n"
+      exit 1 ;;
+  esac
 
   case $host in
     *-*-mingw32)
@@ -163,6 +227,12 @@ build_mingw_toolchain()
     *)
       gnu_win32_options= ;;
   esac
+  
+  # mingw-w64 headers
+  mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
+                                 --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
+  build_with_autotools "mingw-w64" "$builddir" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-headers"
   
   # Binutils
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
@@ -181,10 +251,10 @@ build_mingw_toolchain()
                     --with-sysroot=$prefix --prefix=$prefix \
                     --with-gmp=$prereq_install --with-mpfr=$prereq_install --with-mpc=$prereq_install \
                     --with-cloog=$prereq_install --enable-cloog-backend=isl --with-isl=$prereq_install \
-                    --with-host-libstdcxx=-lstdc++ \
+                    $pploptions \
                     --enable-shared --enable-static --enable-plugins \
                     --disable-multilib --enable-libgomp \
-                    --enable-threads=win32 $gccexceptions \
+                    $gccabioptions \
                     --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
@@ -200,7 +270,7 @@ build_mingw_toolchain()
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                              --prefix=$mingw_w64prefix --enable-sdk=all --enable-wildcard"
   build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_LOG_DIR/$host/$target" \
-                       "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-crt"
+                       "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-$host-$shortname-crt"
   
   winpthreadsconfigureargs="--host=$target --build=$build \
                             --prefix=$prefix/$target \
@@ -210,66 +280,6 @@ build_mingw_toolchain()
   
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS"
-)
-
-build_crosscompiler()
-(
-  shortname="$1"
-  host="$_CROSS_BUILD"
-
-  # Compiler settings
-  case "$shortname" in
-    mingw32)
-      printf "> Building cross-compiler for 32-bit Windows.\n"
-      target="i686-w64-mingw32"
-      gccexceptions="--enable-sjlj-exceptions --disable-dw2-exceptions" ;;
-    mingw32-dw2)
-      printf "> Building cross-compiler for 32-bit Windows (dw2).\n"
-      target="i686-w64-mingw32"
-      gccexceptions="--enable-dw2-exceptions --disable-sjlj-exceptions" ;;
-    mingw64)
-      printf "> Building cross-compiler for 64-bit Windows.\n"
-      target="x86_64-w64-mingw32"
-      case $_CROSS_GCC_VERSION in
-        4.[5-7]*)
-          gccexceptions="--enable-sjlj-exceptions --disable-dw2-exceptions" ;;
-        *)
-          # messes up GCC 4.8.2 configure so that it complains dw2 EH is not available for some reason.
-          #gccexceptions="--disable-sjlj-exceptions --disable-dw2-exceptions --enable-seh-exceptions"
-          ;;
-      esac
-  esac
-  
-  printf ">> Building GCC prerequisites.\n"
-  build_prerequisites "$host"
-  prereq_install="$_CROSS_PREREQ_DIR/$host/install"
-  
-  # Toolchain
-  toolchain_build="$_CROSS_BUILD_DIR/$host/$target"
-  toolchain_install="$toolchain_build/$shortname"
-  mkdir -p "$toolchain_install/mingw/include"
-  
-  # MinGW-w64 v3+ changed install prefix meaning
-  case "$_CROSS_VERSION_MINGW_W64" in
-    trunk|v3.*)
-      mingw_w64prefix="$toolchain_install/$target" ;;
-    v1.*|v2.*)
-      mingw_w64prefix="$toolchain_install" ;;
-    *)
-      printf "Error: unknown MinGW-w64 version: $_CROSS_VERSION_MINGW_W64. Check versions.sh.\n"
-      exit 1 ;;
-  esac
-  
-  # mingw-w64 headers
-  mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
-                                 --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
-  build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
-                       "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-headers"
-
-  build_mingw_toolchain "$_CROSS_BUILD" "$target" "$gccexceptions" "$toolchain_build" "$toolchain_install" "$prereq_install"
-  
-  # cleanup
-  rm -rf "$toolchain_install/mingw"
 )
 
 # build functions

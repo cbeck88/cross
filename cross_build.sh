@@ -9,6 +9,7 @@ printf "> Fetching sources.\n"
 
 printf "> Building cross-compilers.\n"
 build_crosscompiler "mingw32"
+build_crosscompiler "mingw32-dw2"
 build_crosscompiler "mingw64"
 
 printf "All done!\n"
