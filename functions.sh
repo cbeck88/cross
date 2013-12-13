@@ -257,7 +257,7 @@ build_mingw_toolchain()
                     --with-cloog=$prereq_install --enable-cloog-backend=isl --with-isl=$prereq_install \
                     $pploptions \
                     --enable-shared --enable-static --enable-plugins \
-                    --disable-multilib --enable-libgomp --enable-version-specific-runtime-libs \
+                    --disable-multilib --enable-libgomp \
                     $gccabioptions \
                     --enable-languages=c,lto,c++,objc,obj-c++,fortran,java,ada \
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
@@ -272,6 +272,12 @@ build_mingw_toolchain()
                              --prefix=$mingw_w64prefix --enable-sdk=all --enable-wildcard"
   build_with_autotools "mingw-w64" "$builddir/mingw-w64-crt" "$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_LOG_DIR/$host/$target" \
                        "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-crt"
+  
+  # create dummy libpthread, here a copy of another lib
+  if [ ! -f "$prefix/$target/libpthread.a" ]
+  then
+    cp "$prefix/$target/lib/libuser32.a" "$prefix/$target/lib/libpthread.a"
+  fi
   
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
                             --prefix=$prefix/$target \
