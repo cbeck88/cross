@@ -87,7 +87,7 @@ svn_co()
 
 # primary toolchain build functions
 
-build_crosscompiler()
+build_gnu_toolchain()
 (
   shortname="$1"
   if [ -z "$2" ]
@@ -104,12 +104,16 @@ build_crosscompiler()
   # Toolchain
   toolchain_build="$_CROSS_BUILD_DIR/$host/$shortname"
   toolchain_install="$toolchain_build/$shortname"
-  mkdir -p "$toolchain_install/mingw/include"
-
-  build_mingw_toolchain "$host" "$shortname" "$toolchain_build" "$toolchain_install" "$prereq_install" "$mingw_w64prefix"
   
-  # cleanup
-  rm -rf "$toolchain_install/mingw"
+  case "$shortname" in
+    mingw*)
+      mkdir -p "$toolchain_install/mingw/include"
+      build_mingw_toolchain "$host" "$shortname" "$toolchain_build" "$toolchain_install" "$prereq_install" "$mingw_w64prefix"
+      # cleanup
+      rm -rf "$toolchain_install/mingw" ;;
+    *)
+      printf "Unsupported at the moment: $shortname.\n"; exit 1;
+  esac
 )
 
 build_prerequisites()
@@ -155,7 +159,7 @@ build_prerequisites()
   build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$_CROSS_LOG_DIR/$host" \
                       "$islconfigureargs" "$_CROSS_MAKE_ARGS"
 
-  cloogconfigureargs="--host=$_CROSS_BUILD --build=$_CROSS_BUILD --prefix=$prereq_install \
+  cloogconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                       --disable-shared --enable-static \
                       --with-gmp-prefix=$prereq_install --with-bits=gmp --with-isl=system"
   build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$_CROSS_LOG_DIR/$host" \
@@ -185,7 +189,7 @@ build_mingw_toolchain()
   
   # Compiler settings
   #TODO make selectable and working: winpthreads build complains that it can't link to -lpthread :-(
-  gccabioptions="--enable-threads=posix"
+  #gccabioptions="--enable-threads=posix"
   case "$shortname" in
     mingw32)
       printf "> Building cross-compiler for 32-bit Windows.\n"
@@ -231,7 +235,7 @@ build_mingw_toolchain()
   # mingw-w64 headers
   mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                                  --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
-  build_with_autotools "mingw-w64" "$builddir" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
+  build_with_autotools "mingw-w64" "$builddir/mingw-w64-headers" "$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_LOG_DIR/$host/$target" \
                        "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-headers"
   
   # Binutils
@@ -264,18 +268,15 @@ build_mingw_toolchain()
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap"
   
-  printf ">> Adding cross tools to PATH.\n"
-  export PATH="$prefix/bin":$PATH
-  
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                              --prefix=$mingw_w64prefix --enable-sdk=all --enable-wildcard"
-  build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_LOG_DIR/$host/$target" \
-                       "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-$host-$shortname-crt"
+  build_with_autotools "mingw-w64" "$builddir/mingw-w64-crt" "$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_LOG_DIR/$host/$target" \
+                       "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-crt"
   
-  winpthreadsconfigureargs="--host=$target --build=$build \
+  winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
                             --prefix=$prefix/$target \
                             --enable-shared --enable-static"
-  build_with_autotools "mingw-w64" "$_CROSS_BUILD_DIR/$host/$target" "$_CROSS_VERSION_MINGW_W64/mingw-w64-libraries/winpthreads" "$_CROSS_LOG_DIR/$host/$target" \
+  build_with_autotools "mingw-w64" "$builddir/winpthreads" "$_CROSS_VERSION_MINGW_W64/mingw-w64-libraries/winpthreads" "$_CROSS_LOG_DIR/$host/$target" \
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-winpthreads"
   
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
@@ -306,7 +307,7 @@ build_with_autotools()
   then
     printf ">>> $project$buildstep already configured.\n"
   else
-    printf ">>> Configuring $project$buildstep:\n"
+    printf ">>> Configuring $project$buildstep.\n"
     sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
        || { printf "Failure configuring $project$buildstep. Check $logdir/configure.log for details.\n"; exit 1; }
   fi

@@ -29,7 +29,9 @@ fetch_source_release "$GNU_URL/mpc"  "mpc-$_CROSS_VERSION_MPC"     "gz"
 fetch_source_release "$PPL_URL"      "ppl-$_CROSS_VERSION_PPL"     "xz"  "$PPL_PATCHES"
 fetch_source_release "$ISL_URL"      "isl-$_CROSS_VERSION_ISL"     "bz2"
 fetch_source_release "$CLOOG_URL"    "cloog-$_CROSS_VERSION_CLOOG" "gz"
-fetch_source_release "$EXPAT_URL"    "expat-$_CROSS_VERSION_EXPAT" "gz"
+
+fetch_source_release "$GNU_URL/libiconv" "libiconv-$_CROSS_VERSION_LIBICONV" "gz"
+fetch_source_release "$EXPAT_URL"        "expat-$_CROSS_VERSION_EXPAT"       "gz"
 
 printf ">> Downloading MinGW-w64 goodies.\n"
 if [ "$_CROSS_VERSION_MINGW_W64" = "trunk" ]
