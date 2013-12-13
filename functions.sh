@@ -257,9 +257,9 @@ build_mingw_toolchain()
                     --with-cloog=$prereq_install --enable-cloog-backend=isl --with-isl=$prereq_install \
                     $pploptions \
                     --enable-shared --enable-static --enable-plugins \
-                    --disable-multilib --enable-libgomp \
+                    --disable-multilib --enable-libgomp --enable-version-specific-runtime-libs \
                     $gccabioptions \
-                    --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
+                    --enable-languages=c,lto,c++,objc,obj-c++,fortran,java,ada \
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \

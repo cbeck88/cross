@@ -3,7 +3,6 @@
 printf "> Preparing.\n"
 . ./prepare.sh
 
-echo $_CROSS_DIR
 printf "> Fetching sources.\n"
 . ./fetch_sources.sh
 
