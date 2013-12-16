@@ -7,11 +7,14 @@ printf ">> Loading functions.\n"
 printf ">> Loading versions information.\n"
 . ./versions.sh
 
+printf ">> Checking for interfering cross-compilers.\n"
+check_executables "i686-w64-mingw32-ld" "i686-w64-mingw32-gcc" "x86_64-w64-mingw32-ld" "x86_64-w64-mingw32-gcc" || printf ">>> None found.\n"
+
 printf ">> Checking for required executables.\n"
 check_executables "gcc" "flex" "bison" "makeinfo" "7z" "svn" "git" "make" "python" "curl" "patch"
 check_executables "python"
 printf ">> Checking executable versions.\n"
-printf ">>> Python"
+printf ">>> Python\n"
 case `python -c 'import platform; print(platform.python_version())'` in
   3.?.?)
     printf ">>> 'python' is version 3. We (LLVM) need(s) version 2.\n"

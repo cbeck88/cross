@@ -146,6 +146,11 @@ build_prerequisites()
 
   case "$_CROSS_GCC_VERSION" in
     4.5*|4.6*|4.7*)
+      if [ "$host" = "*-*-mingw32" ]
+      then
+        printf ">>> Removing previous PPL build to prevent C++ ABI breakage.\n"
+        rm -rf "$prereq_build/ppl"
+      fi
       pplconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                         --disable-shared --enable-static \
                         --with-gmp=$prereq_install"
@@ -189,18 +194,18 @@ build_mingw_toolchain()
   
   # Compiler settings
   #TODO make selectable and working: winpthreads build complains that it can't link to -lpthread :-(
-  #gccabioptions="--enable-threads=posix"
+  gccabioptions="--enable-threads=posix"
   case "$shortname" in
     mingw32)
-      printf "> Building cross-compiler for 32-bit Windows.\n"
+      printf "> Building compiler for 32-bit Windows.\n"
       target="i686-w64-mingw32"
       gccabioptions="$gccabioptions --enable-sjlj-exceptions --disable-dw2-exceptions" ;;
     mingw32-dw2)
-      printf "> Building cross-compiler for 32-bit Windows (dw2).\n"
+      printf "> Building compiler for 32-bit Windows (dw2).\n"
       target="i686-w64-mingw32"
       gccabioptions="$gccabioptions --enable-dw2-exceptions --disable-sjlj-exceptions" ;;
     mingw64)
-      printf "> Building cross-compiler for 64-bit Windows.\n"
+      printf "> Building compiler for 64-bit Windows.\n"
       target="x86_64-w64-mingw32"
       case $_CROSS_GCC_VERSION in
         4.[5-7]*)
@@ -257,9 +262,9 @@ build_mingw_toolchain()
                     --with-cloog=$prereq_install --enable-cloog-backend=isl --with-isl=$prereq_install \
                     $pploptions \
                     --enable-shared --enable-static --enable-plugins \
-                    --disable-multilib --enable-libgomp \
+                    --disable-multilib --enable-libgomp --disable-libstdcxx-pch \
                     $gccabioptions \
-                    --enable-languages=c,lto \
+                    --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \
@@ -286,7 +291,7 @@ build_mingw_toolchain()
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-winpthreads"
   
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
-                       "$gccconfigureargs --enable-languages=c,lto,c++,objc,obj-c++,fortran,java,ada" "$_CROSS_MAKE_ARGS"
+                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS"
 )
 
 # build functions
