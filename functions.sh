@@ -256,7 +256,7 @@ build_mingw_toolchain()
   case "$_CROSS_VERSION_GCC" in
     4.5*|4.6*|4.7*)
       pploptions="--with-ppl=$prereq_install --disable-ppl-version-check \
-                  --with-host-libstdcxx=-lstdc++" ;;
+                  --with-host-libstdcxx='-lstdc++ -lm -gcc_eh'" ;;
   esac
   gccconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                     --with-sysroot=$prefix --prefix=$prefix \
@@ -322,7 +322,8 @@ build_with_autotools()
     printf ">>> $project$buildstep already configured.\n"
   else
     printf ">>> Configuring $project$buildstep.\n"
-    sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure$buildstep.log" 2>&1 \
+    # eval for quoting magic
+    eval sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure$buildstep.log" 2>&1 \
        || { printf "Failure configuring $project$buildstep. Check $logdir/configure$buildstep.log for details.\n"; exit 1; }
   fi
   touch "$builddir/configure$buildstep.marker"
