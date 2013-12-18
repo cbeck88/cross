@@ -12,7 +12,7 @@ MINGW_W64_SVN="svn://svn.code.sf.net/p/mingw-w64/code"
 
 # patches
 rm -f "$_CROSS_LOG_DIR/patches.log"
-PPL_PATCHES="$_CROSS_PATCH_DIR/ppl-gmp-5.1.patch.txt"
+#PPL_PATCHES="$_CROSS_PATCH_DIR/ppl-gmp-5.1.patch.txt"
 BINUTILS_PATCHES="$_CROSS_PATCH_DIR/binutils-texinfo-5.0.patch.txt"
 case "$_CROSS_VERSION_GCC" in
   4.6*)

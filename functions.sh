@@ -145,8 +145,8 @@ build_prerequisites()
   build_with_autotools "mpc" "$prereq_build" "$_CROSS_VERSION_MPC" "$_CROSS_LOG_DIR/$host" \
                       "$mpcconfigureargs" "$_CROSS_MAKE_ARGS"
 
-  case "$_CROSS_GCC_VERSION" in
-    4.5*|4.6*|4.7*)
+  case "$_CROSS_VERSION_GCC" in
+    4.[6-7]*)
       if [ "$host" = "*-*-mingw32" ]
       then
         printf ">>> Removing previous PPL build to prevent C++ ABI breakage.\n"
@@ -322,7 +322,7 @@ build_with_autotools()
     printf ">>> $project$buildstep already configured.\n"
   else
     printf ">>> Configuring $project$buildstep.\n"
-    sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs CFLAGS="$_CROSS_CFLAGS" CXXFLAGS="$_CROSS_CXXFLAGS" LDFLAGS="$_CROSS_LDFLAGS" > "$logdir/configure$buildstep.log" 2>&1 \
+    sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure$buildstep.log" 2>&1 \
        || { printf "Failure configuring $project$buildstep. Check $logdir/configure$buildstep.log for details.\n"; exit 1; }
   fi
   touch "$builddir/configure$buildstep.marker"
