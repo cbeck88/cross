@@ -15,8 +15,10 @@ rm -f "$_CROSS_LOG_DIR/patches.log"
 PPL_PATCHES="$_CROSS_PATCH_DIR/ppl-gmp-5.1.patch.txt"
 BINUTILS_PATCHES="$_CROSS_PATCH_DIR/binutils-texinfo-5.0.patch.txt"
 case "$_CROSS_VERSION_GCC" in
-  "4.[5-6]*")
-    GCC_PATCHES="$_CROSS_PATCH_DIR/gcc-CLOOG_INT.patch.txt" ;;
+  4.6*)
+    GCC_PATCHES="$_CROSS_PATCH_DIR/gcc-CLOOG_INT.patch.txt $_CROSS_PATCH_DIR//gcc-4.7-texinfo-5.0.patch.txt" ;;
+  4.7*)
+    GCC_PATCHES="$_CROSS_PATCH_DIR//gcc-4.7-texinfo-5.0.patch.txt";;
   *)
     GCC_PATCHES= ;;
 esac

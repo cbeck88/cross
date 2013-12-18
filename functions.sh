@@ -129,6 +129,7 @@ build_prerequisites()
   gmpconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                     --disable-shared --enable-static \
                     --enable-cxx"
+                    #CC=$host-gcc CXX=$host-g++
   build_with_autotools "gmp" "$prereq_build" "$_CROSS_VERSION_GMP" "$_CROSS_LOG_DIR/$host" \
                       "$gmpconfigureargs" "$_CROSS_MAKE_ARGS"
 
@@ -249,17 +250,19 @@ build_mingw_toolchain()
                          --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror \
                          $gnu_win32_options \
                          $_CROSS_PACKAGE_VERSION"
+                         #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "$_CROSS_LOG_DIR/$host/$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix"
-#  case "$_CROSS_VERSION_GCC" in
-#     4.5*|4.6*|4.7*)
-#       printf ">> GCC 4.[5-7]\n"
-#       gcchostlibstdcxx="" ;;
-#   esac
+  case "$_CROSS_VERSION_GCC" in
+    4.5*|4.6*|4.7*)
+      pploptions="--with-ppl=$prereq_install --disable-ppl-version-check \
+                  --with-host-libstdcxx=-lstdc++" ;;
+  esac
   gccconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                     --with-sysroot=$prefix --prefix=$prefix \
                     --with-gmp=$prereq_install --with-mpfr=$prereq_install --with-mpc=$prereq_install \
-                    --with-cloog=$prereq_install --enable-cloog-backend=isl --with-isl=$prereq_install \
+                    --with-cloog=$prereq_install --disable-cloog-version-check \
+                    --enable-cloog-backend=isl --with-isl=$prereq_install \
                     $pploptions \
                     --enable-shared --enable-static --enable-plugins \
                     --disable-multilib --enable-libgomp --disable-libstdcxx-pch \
@@ -319,8 +322,8 @@ build_with_autotools()
     printf ">>> $project$buildstep already configured.\n"
   else
     printf ">>> Configuring $project$buildstep.\n"
-    sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure.log" 2>&1 \
-       || { printf "Failure configuring $project$buildstep. Check $logdir/configure.log for details.\n"; exit 1; }
+    sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs CFLAGS="$_CROSS_CFLAGS" CXXFLAGS="$_CROSS_CXXFLAGS" LDFLAGS="$_CROSS_LDFLAGS" > "$logdir/configure$buildstep.log" 2>&1 \
+       || { printf "Failure configuring $project$buildstep. Check $logdir/configure$buildstep.log for details.\n"; exit 1; }
   fi
   touch "$builddir/configure$buildstep.marker"
 
@@ -341,7 +344,7 @@ build_with_autotools()
     printf ">>> $project$buildstep already installed.\n"
   else
     printf ">>> Installing $project$buildstep.\n"
-    make ${makeinstallargs} > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
+    make $makeinstallargs > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
       || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
   fi
   touch "$builddir/install$buildstep.marker"

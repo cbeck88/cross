@@ -30,7 +30,8 @@ esac
 printf ">>> Python version 2 found with command $_CROSS_PYTHON2.\n"
 
 # build options
-_CROSS_MAKE_ARGS="-j4"
+_CROSS_NPROC=`nproc`
+_CROSS_MAKE_ARGS="-j1$_CROSS_NPROC"
 
 # get build machine GCC triplet
 _CROSS_BUILD=`gcc -dumpmachine`
