@@ -14,6 +14,7 @@ MINGW_W64_SVN="svn://svn.code.sf.net/p/mingw-w64/code"
 rm -f "$_CROSS_LOG_DIR/patches.log"
 #PPL_PATCHES="$_CROSS_PATCH_DIR/ppl-gmp-5.1.patch.txt"
 BINUTILS_PATCHES="$_CROSS_PATCH_DIR/binutils-texinfo-5.0.patch.txt"
+MPFR_PATCHES="$_CROSS_PATCH_DIR/mpfr-3.1.2p5.patch.txt"
 case "$_CROSS_VERSION_GCC" in
   4.6*)
     GCC_PATCHES="$_CROSS_PATCH_DIR/gcc-CLOOG_INT.patch.txt $_CROSS_PATCH_DIR//gcc-4.7-texinfo-5.0.patch.txt" ;;
@@ -26,7 +27,7 @@ MAKE_PATCHES="$_CROSS_PATCH_DIR/make-win32.patch.txt"
 
 printf ">> Downloading prerequisite libraries.\n"
 fetch_source_release "$GNU_URL/gmp"  "gmp-$_CROSS_VERSION_GMP"     "bz2"
-fetch_source_release "$GNU_URL/mpfr" "mpfr-$_CROSS_VERSION_MPFR"   "xz"
+fetch_source_release "$GNU_URL/mpfr" "mpfr-$_CROSS_VERSION_MPFR"   "xz"  "$MPFR_PATCHES"
 fetch_source_release "$GNU_URL/mpc"  "mpc-$_CROSS_VERSION_MPC"     "gz"
 fetch_source_release "$PPL_URL"      "ppl-$_CROSS_VERSION_PPL"     "xz"  "$PPL_PATCHES"
 fetch_source_release "$ISL_URL"      "isl-$_CROSS_VERSION_ISL"     "bz2"
