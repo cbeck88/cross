@@ -156,7 +156,7 @@ build_prerequisites()
                         --disable-shared --enable-static \
                         --with-gmp=$prereq_install"
       build_with_autotools "ppl" "$prereq_build" "$_CROSS_VERSION_PPL" "$_CROSS_LOG_DIR/$host" \
-                           "$pplconfigureargs" "$_CROSS_MAKE_ARGS" ;;
+                           "$pplconfigureargs" "$_CROSS_MAKE_ARGS -j1" ;;
   esac
 
   islconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
