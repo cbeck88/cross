@@ -17,11 +17,11 @@ BINUTILS_PATCHES="$_CROSS_PATCH_DIR/binutils-texinfo-5.0.patch.txt"
 MPFR_PATCHES="$_CROSS_PATCH_DIR/mpfr-3.1.2p5.patch.txt"
 case "$_CROSS_VERSION_GCC" in
   4.6*)
-    GCC_PATCHES="$_CROSS_PATCH_DIR/gcc-CLOOG_INT.patch.txt $_CROSS_PATCH_DIR//gcc-4.7-texinfo-5.0.patch.txt" ;;
+    GCC_PATCHES=("$_CROSS_PATCH_DIR/gcc-CLOOG-LANGUAGE_C.patch.txt $_CROSS_PATCH_DIR/gcc-4.6-texinfo-5.0.patch.txt $_CROSS_PATCH_DIR/gcc-4.6-texinfo-5.0.patch.txt") ;;
   4.7*)
-    GCC_PATCHES="$_CROSS_PATCH_DIR//gcc-4.7-texinfo-5.0.patch.txt";;
+    GCC_PATCHES="$_CROSS_PATCH_DIR/gcc-4.7-texinfo-5.0.patch.txt";;
   *)
-    GCC_PATCHES= ;;
+    GCC_PATCHES=
 esac
 MAKE_PATCHES="$_CROSS_PATCH_DIR/make-win32.patch.txt"
 

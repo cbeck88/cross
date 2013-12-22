@@ -13,10 +13,10 @@ _CROSS_VERSION_EXPAT="2.1.0"
 _CROSS_VERSION_MINGW_W64="v3.0.0"
 
 _CROSS_VERSION_BINUTILS="2.24"
-_CROSS_VERSION_GCC="4.7.2"
+_CROSS_VERSION_GCC="4.6.3"
 _CROSS_VERSION_LLVM="3.3"
 
 _CROSS_VERSION_GDB="7.6.2"
 _CROSS_VERSION_MAKE="3.82"
 
-_CROSS_PACKAGE_VERSION="--with-pkgversion=rubenvb --with-bugurl=mingw-w64-public@lists.sourceforge.net"
+_CROSS_PACKAGE_VERSION="--with-pkgversion=rubenvb --with-bugurl=github.com/rubenvb/cross/issues"

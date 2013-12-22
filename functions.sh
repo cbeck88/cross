@@ -23,6 +23,7 @@ fetch_source_release()
   name="$2"
   ext="tar.$3"
   file="$name.$ext"
+  patches="$4"
   
   cd "$_CROSS_SOURCE_DIR"
 
@@ -42,7 +43,7 @@ fetch_source_release()
   fi
 
   cd "$_CROSS_SOURCE_DIR/$name"
-  for patchfile in "${@:4}"
+  for patchfile in $patches #"${@:4}"
   do
     printf ">>> Applying patch $patchfile.\n"
     printf "**** Patching $name in $_CROSS_SOURCE_DIR with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
@@ -293,6 +294,10 @@ build_mingw_toolchain()
   build_with_autotools "mingw-w64" "$builddir/winpthreads" "$_CROSS_VERSION_MINGW_W64/mingw-w64-libraries/winpthreads" "$_CROSS_LOG_DIR/$host/$target" \
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install" "-winpthreads"
   
+  case "$_CROSS_VERSION_GCC" in
+    4.[6-7]*)
+      rm -rf $builddir/gcc
+  esac
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS"
 )

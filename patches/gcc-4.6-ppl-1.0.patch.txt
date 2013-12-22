@@ -1,0 +1,11 @@
+--- configure
++++ configure
+@@ -5697,7 +5697,7 @@
+ main ()
+ {
+ 
+-    #if PPL_VERSION_MAJOR != 0 || PPL_VERSION_MINOR < 11
++    #if PPL_VERSION_MAJOR == 0 && PPL_VERSION_MINOR < 11
+     choke me
+     #endif
+ 

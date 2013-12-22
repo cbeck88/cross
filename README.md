@@ -12,8 +12,7 @@ cross_build.sh
   Build the MinGW-w64 cross-compilers from the ground up.
   Checks for prerequisite programs at the start before downloading any sources.
 
-The other scripts are called from the above:
+The other scripts provide supporting functions:
 
-cross_compiler.sh
-  Builds a cross-compiler which runs on the current system to build MinGW-w64
-  applications.
+cross_clean.sh
+  remove all the build files.
