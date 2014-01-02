@@ -1,6 +1,12 @@
 #! /usr/bin/env sh
 set -e
 
+if [[ $UID -e 0 ]];
+then
+  printf "cross_build must not be run as root.\n"
+  exit 1
+fi
+
 printf ">> Loading functions.\n"
 . ./functions.sh
 
