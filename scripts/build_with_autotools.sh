@@ -15,10 +15,12 @@ build_with_autotools()
     makeinstallargs="$7"
   fi
   buildstep="$8"
-
+  
   mkdir -p "$logdir"
   mkdir -p "$builddir" && cd "$builddir"
 
+  
+  
   if [ -f "$builddir/configure$buildstep.marker" ]
   then
     printf ">>> $project$buildstep already configured.\n"

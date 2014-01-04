@@ -87,7 +87,7 @@ build_mingw_toolchain()
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \
-                    $gnu_win32_options $_CROSS_PACKAGE_VERSION \
+                    $gnu_win32_options $_CROSS_GNU_PKGVERSION \
                     LDFLAGS=-static"
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap"

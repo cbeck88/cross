@@ -82,7 +82,6 @@ In order to maintain maximum compatibility, the GCC prerequisite page is used
 to determine which versions of required libraries are used in these toolchains.
 This ensures maximum stability for the resulting compilers.
 
-
 Future directions
 =================
 

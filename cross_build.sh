@@ -1,52 +1,87 @@
 #! /usr/bin/env sh
 
-if [[ $UID -e 0 ]]
+if [ $UID = 0 ]
 then
-  printf "$0 must not be run as root.\n"
+  printf "cross_build.sh must not be run as root.\n"
   exit 1
 fi
 
-printf ">> Loading functions.\n"
+printf "> Determining GCC version to build.\n"
+if [ "x$1" = "x" ]
+then
+  printf ">> Please specify GCC/LLVM version you want to build as X.X[.X] or trunk.\n"
+  exit 1
+else
+  case "$1" in
+    4.5|4.5.?|4.6|4.6.?|4.7|4.7.?|4.8|4.8.?|trunk)
+      export _CROSS_VERSION_GCC=$1
+      printf ">> Building GCC version $_CROSS_VERSION_GCC.\n"
+      ;;
+    *)
+      printf ">>Unsupported GCC version: $1.\n"
+      exit 1
+      ;;
+  esac
+fi
+
+printf "> Loading functions.\n"
 . ./functions.sh
 
-printf ">> Loading versions information.\n"
-. ./versions.sh
+# printf "> Fetching sources.\n"
+# . ./fetch_sources.sh
 
-printf ">> Checking for interfering cross-compilers.\n"
-check_executables "i686-w64-mingw32-ld" "i686-w64-mingw32-gcc" "x86_64-w64-mingw32-ld" "x86_64-w64-mingw32-gcc" || printf ">>> None found.\n"
+printf "> Checking executables needed for the build process.\n"
+check_prerequisites
 
+# build options
+_CROSS_NPROC=`nproc`
+_CROSS_MAKE_ARGS="-j$_CROSS_NPROC"
 
-printf "> Preparing.\n"
-. ./prepare.sh
+# get build machine GCC triplet
+_CROSS_BUILD=`gcc -dumpmachine`
 
-printf "> Fetching sources.\n"
-. ./fetch_sources.sh
+printf "> Setting up directories.\n"
+. ./directories.sh
 
-printf ">> Adding cross tools to PATH.\n"
-export PATH="$_CROSS_BUILD_DIR/$_CROSS_BUILD/mingw32/mingw32/bin":"$_CROSS_BUILD_DIR/$_CROSS_BUILD/mingw64/mingw64/bin":$PATH
+printf "> Building MinGW compilers.\n"
 
-printf "> Building cross-compilers.\n"
+case "$_CROSS_BUILD" in
+  *linux*)
+    build_gnu_toolchain "linux64mingw32" || exit 1
+    build_gnu_toolchain "linux64mingw64" || exit 1
+    
+    build_gnu_toolchain "linux32mingw32" || exit 1
+    build_gnu_toolchain "linux32mingw64" || exit 1
+    ;;
+  *cygwin*)
+    printf "Warning: building on Cygwin untested!\n"
+    build_gnu_toolchain "cygwin32mingw32" || exit 1
+    build_gnu_toolchain "cygwin32mingw64" || exit 1
+    ;;
+  *darwin*)
+    printf "Warning: building on Mac untested!\n"
+    build_gnu_toolchain "mac64mingw32" || exit 1
+    build_gnu_toolchain "mac64mingw64" || exit 1
+    ;;
+  *mingw*)
+    printf "Error: building on Windows won't work!\n"
+    exit 1
+    ;;
+  *)
+    printf "Error: building on $_CROSS_BUILD won't work!\n"
+    ;;
+esac
 
-build_gnu_toolchain "mingw32"
-build_gnu_toolchain "mingw64"
-#build_gnu_toolchain "cygwin32"
-#build_gnu_toolchain "cygwin64"
+printf "> Building native GCC toolchains.\n"
 
-#printf "> Building Canadian Cross compilers.\n"
-#build_gnu_toolchain "mingw32" "i686-pc-cygwin"
-#build_gnu_toolchain "mingw64" "i686-pc-cygwin"
-#build_gnu_toolchain "mingw32" "x86_64-pc-cygwin"
-#build_gnu_toolchain "mingw64" "x86_64-pc-cygwin"
+build_gnu_toolchain "mingw32mingw32" || exit 1
+build_gnu_toolchain "mingw32mingw64" || exit 1
+build_gnu_toolchain "mingw32mingw32-dw2" || exit 1
+build_gnu_toolchain "mingw32mingw64-sjlj" || exit 1
 
-printf "> Building native compilers.\n"
-build_gnu_toolchain "mingw32" "i686-w64-mingw32"
-build_gnu_toolchain "mingw64" "i686-w64-mingw32"
-build_gnu_toolchain "mingw32" "x86_64-w64-mingw32"
-build_gnu_toolchain "mingw64" "x86_64-w64-mingw32"
-
-printf ">> Adding cross tools (dw2) to PATH.\n"
-export PATH="$_CROSS_BUILD_DIR/$_CROSS_BUILD/mingw32-dw2/mingw32-dw2/bin":$PATH
-
-build_gnu_toolchain "mingw32-dw2"
+build_gnu_toolchain "mingw64mingw32" || exit 1
+build_gnu_toolchain "mingw64mingw64" || exit 1
+build_gnu_toolchain "mingw64mingw32-dw2" || exit 1
+build_gnu_toolchain "mingw64mingw64-sjlj" || exit 1
 
 printf "All done!\n"

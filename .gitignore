@@ -2,3 +2,4 @@ src/*
 logs/*
 build/*
 packages/*
+download/*

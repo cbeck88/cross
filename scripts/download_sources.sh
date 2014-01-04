@@ -8,7 +8,7 @@ fetch_source_release()
   file="$name.$ext"
   patches="$4"
   
-  cd "$_CROSS_SOURCE_DIR"
+  cd "$_CROSS_DOWNLOAD_DIR"
 
   if [ -f "$file" ]
   then 
@@ -17,13 +17,15 @@ fetch_source_release()
     printf ">>> Downloading $file from $url/$file.\n"
     curl -# -L -o "$file" "$url/$file" || { printf "Failure downloading from $url/$file.\n"; exit 1; }
   fi
-  if [ -d "$name" ]
+  if [ -d "$_CROSS_SOURCE_DIR/$name" ]
   then
     printf ">>> $file already extracted.\n"
-  else
-    printf ">>> Extracting $file.\n"
-    tar -xf "$file"
+    rm -rf "$_CROSS_SOURCE_DIR/$name"
   fi
+  
+  printf ">>> Extracting $file.\n"
+  cd "$_CROSS_SOURCE_DIR"
+  tar -xf "$_CROSS_DOWNLOAD_DIR/$file"
 
   cd "$_CROSS_SOURCE_DIR/$name"
   for patchfile in $patches #"${@:4}"

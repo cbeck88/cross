@@ -1,13 +1,13 @@
 #! /usr/bin/env sh
 
-check_prerequisites()
+check_executables()
 (
   all_programs_found=true
   for program in "$@"
   do
-    command -v "$program" > /dev/null 2>&1 || { 
+    command -v "$program" > /dev/null 2>&1 && printf ">>> Command $program found.\n" || { 
 not_found="$not_found\n$program"; all_programs_found=false; }
-    printf ">>> Command $program found.\n"
+    
   done
   if ! [ $all_programs_found ]
   then
@@ -16,10 +16,10 @@ not_found="$not_found\n$program"; all_programs_found=false; }
   fi
 )
 
-check_executables()
+check_prerequisites()
 (
   printf ">> Checking for interfering cross-compilers.\n"
-  check_executables "i686-w64-mingw32-ld" "i686-w64-mingw32-gcc" "x86_64-w64-mingw32-ld" "x86_64-w64-mingw32-gcc" || printf ">>> None found.\n"
+  check_executables "i686-w64-mingw32-ld" "i686-w64-mingw32-gcc" "x86_64-w64-mingw32-ld" "x86_64-w64-mingw32-gcc" || printf ">> None found.\n"
   
   printf ">> Checking for required executables.\n"
   check_executables "gcc" "flex" "bison" "makeinfo" "7z" "svn" "git" "make" "python" "curl" "patch"
