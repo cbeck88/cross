@@ -33,7 +33,7 @@ fetch_source_release()
     printf ">>> Applying patch $patchfile.\n"
     printf "**** Patching $name in $_CROSS_SOURCE_DIR with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
     set +e
-    patch --reject-file=- --forward -p0 -i "$patchfile" >> "$_CROSS_LOG_DIR/patches.log" 2>&1
+    patch --reject-file=- --forward -p0 -i "$patchfile.patch.txt" >> "$_CROSS_LOG_DIR/patches.log" 2>&1
     set -e
   done
   

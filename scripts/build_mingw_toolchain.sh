@@ -62,7 +62,7 @@ build_mingw_toolchain()
                        "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
   
   # Binutils
-  fetch_source_release "$_CROSS_URL_GNU/binutils" "binutils-$_CROSS_VERSION_BINUTILS" "bz2" "$BINUTILS_PATCHES" || exit 1
+  fetch_source_release "$_CROSS_URL_GNU/binutils" "binutils-$_CROSS_VERSION_BINUTILS" "bz2" || exit 1
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                          --with-sysroot=/$shortname --prefix=/$shortname \
                          --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror \
@@ -73,7 +73,8 @@ build_mingw_toolchain()
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix" || exit 1
   rm -rf "$_CROSS_SOURCE_DIR/binutils-$_CROSS_VERSION_PPL"
 
-  fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$GCC_PATCHES" || exit 1
+  echo "$_CROSS_PATCHES_GCC"
+  fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[5-7]*)
       pploptions="--with-ppl=$_CROSS_STAGE_DIR --disable-ppl-version-check \
@@ -105,7 +106,7 @@ build_mingw_toolchain()
   stage_project "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
   stage_project "$host" "cloog-$_CROSS_VERSION_CLOOG" || exit 1
   mkdir -p $_CROSS_STAGE_DIR/mingw/include
-  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" "$host_$target" \
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$host_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap" || exit 1
   
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \

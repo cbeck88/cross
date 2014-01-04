@@ -11,3 +11,4 @@
 . ./scripts/versions.sh
 # needs versions
 . ./scripts/urls.sh
+. ./scripts/patches.sh
