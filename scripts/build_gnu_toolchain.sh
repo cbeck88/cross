@@ -60,18 +60,15 @@ build_gnu_toolchain()
   
   printf ">> Building GCC prerequisites.\n"
   build_gnu_prerequisites "$host" || exit 1
-  prereq_install="$_CROSS_PREREQ_DIR"
-  
-  exit 0;
   
   # Toolchain
-  toolchain_build="$_CROSS_BUILD_DIR/$host/$shortname"
+  toolchain_build="$_CROSS_BUILD_DIR/$longname"
   toolchain_install="$toolchain_build/$shortname"
   
   case "$shortname" in
     mingw*)
       mkdir -p "$toolchain_install/mingw/include"
-      build_mingw_toolchain "$host" "$shortname" "$toolchain_build" "$toolchain_install" "$prereq_install" "$mingw_w64prefix" || exit 1
+      build_mingw_toolchain "$host" "$shortname" "$toolchain_build" || exit 1
       # cleanup
       rm -rf "$toolchain_install/mingw" ;;
     *)

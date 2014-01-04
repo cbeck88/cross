@@ -4,7 +4,7 @@ printf ">> Defining download URLs.\n"
 export _CROSS_URL_GNU="ftp://ftp.nluug.nl/mirror/gnu"
 export _CROSS_URL_PPL="ftp://ftp.cs.unipr.it/pub/ppl/releases/$_CROSS_VERSION_PPL"
 export _CROSS_URL_ISL="http://isl.gforge.inria.fr" #"http://isl.gforge.inria.fr" #"ftp://ftp.linux.student.kuleuven.be/pub/people/skimo/isl"
-export _CROSS_URL_CLOOG="http://www.bastoul.net/cloog/pages/download/count.php3?url=."
+export _CROSS_URL_CLOOG="http://www.bastoul.net/cloog/pages/download"
 export _CROSS_URL_CLOOG_PPL="ftp://gcc.gnu.org/pub/gcc/infrastructure"
 export _CROSS_URL_EXPAT="http://sourceforge.net/projects/expat/files/expat/$_CROSS_VERSION_EXPAT"
 

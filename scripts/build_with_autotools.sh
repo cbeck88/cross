@@ -11,7 +11,7 @@ build_with_autotools()
   makebuildargs="$6"
   if [ -z "$7" ]
   then
-    makeinstallargs="install"
+    makeinstallargs="install-strip"
   else
     makeinstallargs="$7"
   fi
@@ -19,7 +19,7 @@ build_with_autotools()
   
   mkdir -p "$logdir"
     
-  packagename="$host-$project-$version$_CROSS_COMPRESS_EXT"
+  packagename="$host-$project-$version$buildstep$_CROSS_COMPRESS_EXT"
   if [ -f "$_CROSS_PACKAGE_DIR/$packagename" ]
   then
     printf ">>> Package already found, skipping build.\n"
@@ -30,8 +30,9 @@ build_with_autotools()
   then
     rm -rf "$builddir"/*
   else
-    mkdir -p "$builddir" && cd "$builddir"
+    mkdir -p "$builddir"
   fi
+  cd "$builddir"
   
   printf ">>> Configuring $project$buildstep.\n"
   # eval for quoting magic
@@ -49,7 +50,7 @@ build_with_autotools()
   
   printf ">>> Packaging $host-$project-$version.\n"
   cd "$_CROSS_STAGE_INSTALL_DIR"
-  rm lib/*.la
+  rm -f lib/*.la
   $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename" ./*
   
   cd "$_CROSS_DIR"

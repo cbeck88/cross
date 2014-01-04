@@ -93,7 +93,7 @@ build_gnu_prerequisites()
                       --disable-shared --enable-static \
                       $_CROSS_MULTILIB_ENV"
   build_with_autotools "expat" "$prereq_build" "$_CROSS_VERSION_EXPAT" "$host" \
-                        "$expatconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+                        "$expatconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
   case $host in
     *-*-mingw32|*-*-cygwin)
       fetch_source_release "$_CROSS_URL_GNU/libiconv" "libiconv-$_CROSS_VERSION_LIBICONV" "gz" || exit 1

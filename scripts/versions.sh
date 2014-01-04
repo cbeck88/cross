@@ -8,7 +8,8 @@ case "$_CROSS_VERSION_GCC" in
     export _CROSS_VERSION_MPFR="3.1.2" #"2.4.2"
     export _CROSS_VERSION_MPC="1.0.1"
     export _CROSS_VERSION_PPL="1.1"
-    export _CROSS_VERSION_CLOOG="0.18"
+    export _CROSS_VERSION_ISL="0.12.1"
+    export _CROSS_VERSION_CLOOG="0.18.1"
     ;;
   4.7*)
     export _CROSS_VERSION_GMP="5.1.3"
@@ -16,7 +17,7 @@ case "$_CROSS_VERSION_GCC" in
     export _CROSS_VERSION_MPC="1.0.1"
     export _CROSS_VERSION_PPL="1.1"
     export _CROSS_VERSION_ISL="0.12.1"
-    export _CROSS_VERSION_CLOOG="0.18.1"
+    export _CROSS_VERSION_CLOOG="0.18.2"
     ;;
   4.8*|trunk)
     export _CROSS_VERSION_GMP="5.1.3"
@@ -24,7 +25,7 @@ case "$_CROSS_VERSION_GCC" in
     export _CROSS_VERSION_MPC="1.0.1"
     export _CROSS_VERSION_PPL="1.1"
     export _CROSS_VERSION_ISL="0.12.1"
-    export _CROSS_VERSION_CLOOG="0.18.1"
+    export _CROSS_VERSION_CLOOG="0.18.2"
     ;;
   *)
     printf "Unknown GCC version: \n'$_CROSS_VERSION_GCC'\n.\n"
