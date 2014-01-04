@@ -2,8 +2,10 @@
 set -e
 
 printf "> Cleaning build directory and logs.\n"
-printf ">> Setting up directories.\n"
-. ./directories.sh
+. ./directories.sh clean
 
 rm -rf "$_CROSS_BUILD_DIR"
 rm -rf "$_CROSS_LOG_DIR"
+rm -rf "$_CROSS_STAGE_DIR"
+rm -rf "$_CROSS_STAGE_INSTALL_DIR"
+rm -rf "$_CROSS_SOURCE_DIR"

@@ -27,6 +27,7 @@ build_gnu_prerequisites()
   build_with_autotools "mpfr" "$prereq_build" "$_CROSS_VERSION_MPFR" "$host" \
                       "$mpfrconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_SOURCE_DIR/mpfr-$_CROSS_VERSION_MPFR"
+  rm -rf "$_CROSS_STAGE_DIR"/*
   
   fetch_source_release "$_CROSS_URL_GNU/mpc" "mpc-$_CROSS_VERSION_MPC" "gz" || exit 1
   mpcconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
@@ -38,6 +39,7 @@ build_gnu_prerequisites()
   build_with_autotools "mpc" "$prereq_build" "$_CROSS_VERSION_MPC" "$host" \
                       "$mpcconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_SOURCE_DIR/mpc-$_CROSS_VERSION_MPC"
+  rm -rf "$_CROSS_STAGE_DIR"/*
   
   case "$_CROSS_VERSION_GCC" in
     4.[5-7]*)
@@ -48,31 +50,43 @@ build_gnu_prerequisites()
                         $_CROSS_MULTILIB_ENV"
       stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
       build_with_autotools "ppl" "$prereq_build" "$_CROSS_VERSION_PPL" "$host" \
-                           "$pplconfigureargs" "$_CROSS_MAKE_ARGS -j1" || exit 1
+                           "$pplconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
       rm -rf "$_CROSS_SOURCE_DIR/ppl-$_CROSS_VERSION_PPL"
+      rm -rf "$_CROSS_STAGE_DIR"/*
+      
+#       fetch_source_release "$_CROSS_URL_CLOOG_PPL" "cloog-ppl-$_CROSS_VERSION_CLOOG_PPL" "gz" || exit 1
+#       cloogpplconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
+#                              --disable-shared --enable-static \
+#                              --with-gmp-prefix=$_CROSS_STAGE_DIR --with-ppl=$_CROSS_STAGE_DIR \
+#                              --with-host-libstdcxx='-lstdc++ -lgcc_eh -lm'"
+#       stage_project "$host" "gmp-$_CROSS_VERSION_GMP"
+#       stage_project "$host" "ppl-$_CROSS_VERSION_PPL"
+#       build_with_autotools "cloog-ppl" "$prereq_build" "$_CROSS_VERSION_CLOOG_PPL" "$host" \
+#                            "$cloogpplconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+#       rm -rf "$_CROSS_SOURCE_DIR/cloog-ppl-$_CROSS_VERSION_CLOOG_PPL"
+#       rm -rf "$_CROSS_STAGE_DIR"/*
   esac
   
-  case "$_CROSS_VERSION_GCC" in
-    4.[7-8]*|trunk)
-    fetch_source_release "$_CROSS_URL_ISL" "isl-$_CROSS_VERSION_ISL" "bz2" || exit 1
-    islconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
-                      --disable-shared --enable-static \
-                      --with-gmp-prefix=$_CROSS_STAGE_DIR \
-                      $_CROSS_MULTILIB_ENV"
-    stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
-    build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$host" \
-                         "$islconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
-    rm -rf "$_CROSS_SOURCE_DIR/ppl-$_CROSS_VERSION_ISL"
-  esac
+  fetch_source_release "$_CROSS_URL_ISL" "isl-$_CROSS_VERSION_ISL" "bz2" || exit 1
+  islconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
+                    --disable-shared --enable-static \
+                    --with-gmp-prefix=$_CROSS_STAGE_DIR \
+                    $_CROSS_MULTILIB_ENV"
+  stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+  build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$host" \
+                        "$islconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  rm -rf "$_CROSS_SOURCE_DIR/ppl-$_CROSS_VERSION_ISL"
+  rm -rf "$_CROSS_STAGE_DIR"/*
   
   fetch_source_release "$_CROSS_URL_CLOOG" "cloog-$_CROSS_VERSION_CLOOG" "gz" || exit 1
   cloogconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
                       --disable-shared --enable-static \
-                      --with-gmp-prefix=$prereq_install --with-bits=gmp \
+                      --with-gmp-prefix=$_CROSS_STAGE_DIR --with-bits=gmp --with-isl-prefix=$_CROSS_STAGE_DIR \
                       $_CROSS_MULTILIB_ENV"
   stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
   build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$host" \
-                       "$cloogconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+                        "$cloogconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  rm -rf "$_CROSS_STAGE_DIR"/*
 
   fetch_source_release "$_CROSS_URL_EXPAT" "expat-$_CROSS_VERSION_EXPAT" "gz" || exit 1
   expatconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
