@@ -43,6 +43,7 @@ build_with_autotools()
     || { printf "Failure building $project. Check $logdir/build$buildstep.log for details.\n"; exit 1; }
   
   printf ">>> Installing $project$buildstep.\n"
+  rm -rf "$_CROSS_STAGE_INSTALL_DIR"/*
   make $makeinstallargs DESTDIR="$_CROSS_STAGE_INSTALL_DIR" > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
     || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
   
@@ -50,9 +51,6 @@ build_with_autotools()
   cd "$_CROSS_STAGE_INSTALL_DIR"
   rm lib/*.la
   $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename" ./*
-  
-  printf ">>> Removing staged $project$buildstep.\n"
-  rm -rf "$_CROSS_STAGE_INSTALL_DIR/*"
   
   cd "$_CROSS_DIR"
 )
