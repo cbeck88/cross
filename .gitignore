@@ -3,3 +3,5 @@ logs/*
 build/*
 packages/*
 download/*
+stage/*
+stage-install/*

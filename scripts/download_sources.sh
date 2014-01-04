@@ -19,7 +19,7 @@ fetch_source_release()
   fi
   if [ -d "$_CROSS_SOURCE_DIR/$name" ]
   then
-    printf ">>> $file already extracted.\n"
+    printf ">>> Deleting previously extracted $file.\n"
     rm -rf "$_CROSS_SOURCE_DIR/$name"
   fi
   

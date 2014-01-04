@@ -42,6 +42,8 @@ build_gnu_toolchain()
       exit 1 ;;
   esac
   
+  printf "> Building GCC compiler from $host to $target.\n"
+  
   # linux multilib hackery
   case "$_CROSS_BUILD" in
     x86_64-*-linux*)

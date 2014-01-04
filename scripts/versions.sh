@@ -7,8 +7,8 @@ case "$_CROSS_VERSION_GCC" in
     # use GCC prerequisite page versions
     export _CROSS_VERSION_GMP="4.3.2"
     export _CROSS_VERSION_MPFR="2.4.2"
-    export _CROSS_VERSION_MPC="0.8.1"
-    export _CROSS_VERSION_PPL="0.11"
+    export _CROSS_VERSION_MPC="1.0.1"
+    export _CROSS_VERSION_PPL="1.1"
     export _CROSS_VERSION_CLOOG_PPL="0.15.9"
     
     export _CROSS_PATCH_MPFR="mpfr-2.4.2p3"

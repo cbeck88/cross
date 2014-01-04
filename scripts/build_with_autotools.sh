@@ -3,9 +3,10 @@
 build_with_autotools()
 (
   project="$1"
-  builddir="$2/$project"
+  builddir="$2/$project$buildstep"
   version="$3"
-  logdir="$4/$project"
+  host="$4"
+  logdir="$_CROSS_LOG_DIR/prereq-$host/$project"
   configureargs="$5"
   makebuildargs="$6"
   if [ -z "$7" ]
@@ -17,42 +18,41 @@ build_with_autotools()
   buildstep="$8"
   
   mkdir -p "$logdir"
-  mkdir -p "$builddir" && cd "$builddir"
-
-  
-  
-  if [ -f "$builddir/configure$buildstep.marker" ]
+    
+  packagename="$host-$project-$version$_CROSS_COMPRESS_EXT"
+  if [ -f "$_CROSS_PACKAGE_DIR/$packagename" ]
   then
-    printf ">>> $project$buildstep already configured.\n"
-  else
-    printf ">>> Configuring $project$buildstep.\n"
-    # eval for quoting magic
-    eval sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure$buildstep.log" 2>&1 \
-       || { printf "Failure configuring $project$buildstep. Check $logdir/configure$buildstep.log for details.\n"; exit 1; }
+    printf ">>> Package already found, skipping build.\n"
+    exit 0
   fi
-  touch "$builddir/configure$buildstep.marker"
 
-  mkdir -p "$builddir" && cd "$builddir"
-
-  if [ -f "$builddir/build$buildstep.marker" ]
+  if [ -d "$builddir" ]
   then
-    printf ">>> $project$buildstep already built.\n"
+    rm -rf "$builddir"/*
   else
-    printf ">>> Building $project$buildstep.\n"
-    make $makebuildargs > "$logdir/build.log" > "$logdir/build$buildstep.log" 2>&1 \
-      || { printf "Failure building $project. Check $logdir/build$buildstep.log for details.\n"; exit 1; }
+    mkdir -p "$builddir" && cd "$builddir"
   fi
-  touch "$builddir/build$buildstep.marker"
   
-  if [ -f "$builddir/install$buildstep.marker" ]
-  then
-    printf ">>> $project$buildstep already installed.\n"
-  else
-    printf ">>> Installing $project$buildstep.\n"
-    make $makeinstallargs > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
-      || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
-  fi
-  touch "$builddir/install$buildstep.marker"
+  printf ">>> Configuring $project$buildstep.\n"
+  # eval for quoting magic
+  eval sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure$buildstep.log" 2>&1 \
+     || { printf "Failure configuring $project$buildstep. Check $logdir/configure$buildstep.log for details.\n"; exit 1; }
+  
+  printf ">>> Building $project$buildstep.\n"
+  make $makebuildargs > "$logdir/build.log" > "$logdir/build$buildstep.log" 2>&1 \
+    || { printf "Failure building $project. Check $logdir/build$buildstep.log for details.\n"; exit 1; }
+  
+  printf ">>> Installing $project$buildstep.\n"
+  make $makeinstallargs DESTDIR="$_CROSS_STAGE_INSTALL_DIR" > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
+    || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
+  
+  printf ">>> Packaging $host-$project-$version.\n"
+  cd "$_CROSS_STAGE_INSTALL_DIR"
+  rm lib/*.la
+  $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename" ./*
+  
+  printf ">>> Removing staged $project$buildstep.\n"
+  rm -rf "$_CROSS_STAGE_INSTALL_DIR/*"
   
   cd "$_CROSS_DIR"
 )
