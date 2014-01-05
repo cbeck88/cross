@@ -5,7 +5,7 @@ stage_project()
   host="$1"
   projects="$2"
   
-  cd "$_CROSS_STAGE_DIR"
+  mkdir -p "$_CROSS_STAGE_DIR" && cd "$_CROSS_STAGE_DIR"
   for project in $projects
   do
     printf ">>> Staging $project.\n"

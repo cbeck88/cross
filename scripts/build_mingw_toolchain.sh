@@ -34,9 +34,9 @@ build_mingw_toolchain()
   # MinGW-w64 v3+ changed install prefix meaning
   case "$_CROSS_VERSION_MINGW_W64" in
     trunk|v3.*)
-      mingw_w64prefix="$prefix/$target" ;;
+      mingw_w64prefix="/$shortname/$target" ;;
     v1.*|v2.*)
-      mingw_w64prefix="$prefix/" ;;
+      mingw_w64prefix="/$shortname/" ;;
     *)
       printf "Error: unknown MinGW-w64 version: $_CROSS_VERSION_MINGW_W64. Check versions.sh.\n"
       exit 1 ;;
@@ -51,10 +51,15 @@ build_mingw_toolchain()
   
   # prepare MinGW-w64
   fetch_source_release "$_CROSS_URL_MINGW_W64" "mingw-w64-$_CROSS_VERSION_MINGW_W64" "bz2" || exit 1
-  ln -s "$_CROSS_SOURCE_DIR/mingw-w64-$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_SOURCE_DIR/mingw-w64-headers-$_CROSS_VERSION_MINGW_W64"
-  ln -s "$_CROSS_SOURCE_DIR/mingw-w64-$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_SOURCE_DIR/mingw-w64-crt-$_CROSS_VERSION_MINGW_W64"
-  ln -s "$_CROSS_SOURCE_DIR/mingw-w64-$_CROSS_VERSION_MINGW_W64/mingw-w64-libraries/winpthreads" "$_CROSS_SOURCE_DIR/mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64"
-  
+  if [ -h "$_CROSS_SOURCE_DIR/mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" ]
+  then
+    printf ">>> MinGW-w64 source symlinks exist.\n"
+  else
+    ln -s "$_CROSS_SOURCE_DIR/mingw-w64-$_CROSS_VERSION_MINGW_W64/mingw-w64-headers" "$_CROSS_SOURCE_DIR/mingw-w64-headers-$_CROSS_VERSION_MINGW_W64"
+    ln -s "$_CROSS_SOURCE_DIR/mingw-w64-$_CROSS_VERSION_MINGW_W64/mingw-w64-crt" "$_CROSS_SOURCE_DIR/mingw-w64-crt-$_CROSS_VERSION_MINGW_W64"
+    ln -s "$_CROSS_SOURCE_DIR/mingw-w64-$_CROSS_VERSION_MINGW_W64/mingw-w64-libraries/winpthreads" "$_CROSS_SOURCE_DIR/mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64"
+  fi
+
   # MinGW-w64 headers
   mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                                  --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
@@ -64,16 +69,15 @@ build_mingw_toolchain()
   # Binutils
   fetch_source_release "$_CROSS_URL_GNU/binutils" "binutils-$_CROSS_VERSION_BINUTILS" "bz2" || exit 1
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
-                         --with-sysroot=/$shortname --prefix=/$shortname \
+                         --with-sysroot=$_CROSS_STAGE_DIR/$shortname --prefix=/$shortname \
                          --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror \
                          $gnu_win32_options \
                          $_CROSS_PACKAGE_VERSION"
                          #CC=$host-gcc
-  build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "$host_$target" \
+  build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix" || exit 1
-  rm -rf "$_CROSS_SOURCE_DIR/binutils-$_CROSS_VERSION_PPL"
+  # rm -rf "$_CROSS_SOURCE_DIR/binutils-$_CROSS_VERSION_BINUTILS"
 
-  echo "$_CROSS_PATCHES_GCC"
   fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[5-7]*)
@@ -81,7 +85,7 @@ build_mingw_toolchain()
                   --with-host-libstdcxx='-lstdc++ -lm -gcc_eh'" ;;
   esac
   gccconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
-                    --with-sysroot=/$shortname --prefix=/$shortname \
+                    --with-sysroot=$_CROSS_STAGE_DIR/$shortname --prefix=/$shortname \
                     --with-gmp=$_CROSS_STAGE_DIR --with-mpfr=$_CROSS_STAGE_DIR --with-mpc=$_CROSS_STAGE_DIR \
                     --with-cloog=$_CROSS_STAGE_DIR --disable-cloog-version-check \
                     --enable-cloog-backend=isl --with-isl=$_CROSS_STAGE_DIR \
@@ -96,6 +100,8 @@ build_mingw_toolchain()
                     $gnu_win32_options $_CROSS_GNU_PKGVERSION \
                     LDFLAGS=-static"
   stage_project "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" || exit 1
+  stage_project "$host_$target" "binutils-$_CROSS_VERSION_BINUTILS" || exit 1
+  PATH="$_CROSS_STAGE_DIR/$shortname/bin:$PATH"
   stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
   stage_project "$host" "mpfr-$_CROSS_VERSION_MPFR" || exit 1
   stage_project "$host" "mpc-$_CROSS_VERSION_MPC" || exit 1
@@ -105,33 +111,33 @@ build_mingw_toolchain()
   esac
   stage_project "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
   stage_project "$host" "cloog-$_CROSS_VERSION_CLOOG" || exit 1
-  mkdir -p $_CROSS_STAGE_DIR/mingw/include
-  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$host_$target" \
+  mkdir -p $_CROSS_STAGE_DIR/$shortname/mingw/include
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-gcc" "-bootstrap" || exit 1
   
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
-                             --prefix=$mingw_w64prefix --enable-sdk=all --enable-wildcard"
+                             --prefix=$mingw_w64prefix --enable-wildcard"
   stage_project "$host_$target" "gcc-$_CROSS_VERSION_GCC-bootstrap" || exit 1
   build_with_autotools "mingw-w64-crt" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
-  
+  stage_project "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" || exit 1
   # create dummy libpthread, here a copy of another lib
   if [ ! -f "$_CROSS_STAGE_DIR/$target/libpthread.a" ]
   then
-    cp "$prefix/$target/lib/libuser32.a" "$prefix/$target/lib/libpthread.a"
+    cp "$_CROSS_STAGE_DIR/$shortname/$target/lib/libuser32.a" "$_CROSS_STAGE_DIR/$shortname/$target/lib/libpthread.a"
   fi
   
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
                             --prefix=$prefix/$target \
                             --enable-shared --enable-static"
-  build_with_autotools "mingw-w64" "$builddir" "$_CROSS_VERSION_MINGW_W64/mingw-w64-winpthreads" "$_CROSS_LOG_DIR/$host/$target" \
+  build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" "-winpthreads" || exit 1
   
 #   case "$_CROSS_VERSION_GCC" in
 #     4.[6-7]*)
 #       rm -rf $builddir/gcc
 #   esac
-  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "$_CROSS_LOG_DIR/$host/$target" \
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_SOURCE_DIR"/*
 )

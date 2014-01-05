@@ -48,10 +48,10 @@ printf "> Building MinGW compilers.\n"
 case "$_CROSS_BUILD" in
   *linux*)
     build_gnu_toolchain "linux64mingw32" || exit 1
-    build_gnu_toolchain "linux64mingw64" || exit 1
-    
-    build_gnu_toolchain "linux32mingw32" || exit 1
-    build_gnu_toolchain "linux32mingw64" || exit 1
+#     build_gnu_toolchain "linux64mingw64" || exit 1
+#     
+#     build_gnu_toolchain "linux32mingw32" || exit 1
+#     build_gnu_toolchain "linux32mingw64" || exit 1
     ;;
   *cygwin*)
     printf "Warning: building on Cygwin untested!\n"
@@ -75,13 +75,13 @@ esac
 printf "> Building native GCC toolchains.\n"
 
 build_gnu_toolchain "mingw32mingw32" || exit 1
-build_gnu_toolchain "mingw32mingw64" || exit 1
-build_gnu_toolchain "mingw32mingw32-dw2" || exit 1
-build_gnu_toolchain "mingw32mingw64-sjlj" || exit 1
-
-build_gnu_toolchain "mingw64mingw32" || exit 1
-build_gnu_toolchain "mingw64mingw64" || exit 1
-build_gnu_toolchain "mingw64mingw32-dw2" || exit 1
-build_gnu_toolchain "mingw64mingw64-sjlj" || exit 1
+# build_gnu_toolchain "mingw32mingw64" || exit 1
+# build_gnu_toolchain "mingw32mingw32-dw2" || exit 1
+# build_gnu_toolchain "mingw32mingw64-sjlj" || exit 1
+# 
+# build_gnu_toolchain "mingw64mingw32" || exit 1
+# build_gnu_toolchain "mingw64mingw64" || exit 1
+# build_gnu_toolchain "mingw64mingw32-dw2" || exit 1
+# build_gnu_toolchain "mingw64mingw64-sjlj" || exit 1
 
 printf "All done!\n"

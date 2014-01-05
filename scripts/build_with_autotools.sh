@@ -3,7 +3,7 @@
 build_with_autotools()
 (
   project="$1"
-  builddir="$2/$project$buildstep"
+  builddir="$2/$project"
   version="$3"
   host="$4"
   logdir="$_CROSS_LOG_DIR/prereq-$host/$project"
@@ -50,7 +50,7 @@ build_with_autotools()
   
   printf ">>> Packaging $host-$project-$version.\n"
   cd "$_CROSS_STAGE_INSTALL_DIR"
-  rm -f lib/*.la
+  find . -name \*.la -exec rm -f {} \;
   $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename" ./*
   
   cd "$_CROSS_DIR"
