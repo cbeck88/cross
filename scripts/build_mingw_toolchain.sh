@@ -71,8 +71,7 @@ build_mingw_toolchain()
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                          --with-sysroot=$_CROSS_STAGE_DIR/$shortname --prefix=$_CROSS_STAGE_DIR/$shortname \
                          --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror \
-                         $gnu_win32_options \
-                         $_CROSS_PACKAGE_VERSION"
+                         $gnu_win32_options $_CROSS_PACKAGE_VERSION"
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix" "install-strip prefix=/$shortname" || exit 1
@@ -93,7 +92,7 @@ build_mingw_toolchain()
                     --disable-multilib --enable-libgomp --disable-libstdcxx-pch \
                     $gccabioptions \
                     --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
-                    --enable-fully-dynamic-string --enable-libstdcxx-time \
+                    --enable-fully-dynamic-string --enable-libstdcxx-time --enable-libstdcxx-debug \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \
                     $gnu_win32_options $_CROSS_GNU_PKGVERSION \
@@ -113,7 +112,7 @@ build_mingw_toolchain()
   mkdir -p $_CROSS_STAGE_DIR/$shortname/mingw/include
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-strip-gcc prefix=/$shortname" "-bootstrap" || exit 1
-  
+
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                              --prefix=$mingw_w64prefix --enable-wildcard"
   stage_project "${host}_$target" "gcc-$_CROSS_VERSION_GCC-bootstrap" || exit 1
@@ -125,7 +124,7 @@ build_mingw_toolchain()
   then
     cp "$_CROSS_STAGE_DIR/$shortname/$target/lib/libuser32.a" "$_CROSS_STAGE_DIR/$shortname/$target/lib/libpthread.a"
   fi
-  
+
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
                             --prefix=/$shortname/$target \
                             --enable-shared --enable-static"
@@ -135,6 +134,17 @@ build_mingw_toolchain()
   stage_project "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" || exit 1
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip prefix=/$shortname" || exit 1
-  
+
   rm -rf "$_CROSS_STAGE_DIR"/*
+  
+  fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2"
+  # TODO python support stuff
+  gdbconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
+                    --prefix=/$shortname \
+                    --with-libexpat-prefix=$PREREQ_INSTALL \
+                    --enable-64-bit-bfd --disable-nls \
+                    $gnu_win32_options $_CROSS_GNU_PKG_VERSION"
+  stage_project "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
+  build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
+                       "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
 )

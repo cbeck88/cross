@@ -63,14 +63,27 @@ build_gnu_toolchain()
   
   # Toolchain
   toolchain_build="$_CROSS_BUILD_DIR/$longname"
-  toolchain_install="$toolchain_build/$shortname"
   
   case "$shortname" in
     mingw*)
-      mkdir -p "$toolchain_install/mingw/include"
-      build_mingw_toolchain "$host" "$shortname" "$toolchain_build" || exit 1
-      # cleanup
-      rm -rf "$toolchain_install/mingw" ;;
+      toolchainpackage=${longname}_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT
+      if [ -f "$_CROSS_PACKAGE_DIR/$toolchainpackage" ]
+      then
+        printf ">> $longname toolchain package already created.\n"
+      else
+        build_mingw_toolchain "$host" "$shortname" "$toolchain_build" || exit 1
+      
+        printf ">> Creating $longname toolchain package.\n"
+        stage_project "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64"
+        stage_project "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS"
+        stage_project "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64"
+        stage_project "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64"
+        stage_project "${host}_$target" "gcc-$_CROSS_VERSION_GCC"
+      
+        cd "$_CROSS_STAGE_DIR"
+        $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$toolchainpackage" ./*
+      fi
+      ;;
     *)
       printf "Unsupported at the moment: $shortname.\n"; exit 1;
   esac
