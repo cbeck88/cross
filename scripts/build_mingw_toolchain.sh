@@ -146,5 +146,5 @@ build_mingw_toolchain()
                     $gnu_win32_options $_CROSS_GNU_PKG_VERSION"
   stage_project "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
-                       "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+                       "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1
 )
