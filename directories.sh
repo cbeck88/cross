@@ -2,7 +2,7 @@
 
 _CROSS_DIR="`pwd`"
 _CROSS_DOWNLOAD_DIR="$_CROSS_DIR/download"
-_CROSS_SOURCE_DIR="/tmp/cross/src"
+_CROSS_SOURCE_DIR="$_CROSS_DIR/src"
 _CROSS_PATCH_DIR="$_CROSS_DIR/patches"
 _CROSS_BUILD_DIR="$_CROSS_DIR/build"
 _CROSS_STAGE_DIR="/tmp/cross/stage"

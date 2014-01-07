@@ -22,7 +22,7 @@ build_with_autotools()
   packagename="$host-$project-$version$buildstep$_CROSS_COMPRESS_EXT"
   if [ -f "$_CROSS_PACKAGE_DIR/$packagename" ]
   then
-    printf ">>> Package already found, skipping build.\n"
+    printf ">>> Package $packagename already found, skipping build.\n"
     exit 0
   fi
 
@@ -48,7 +48,7 @@ build_with_autotools()
   make $makeinstallargs DESTDIR="$_CROSS_STAGE_INSTALL_DIR" > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
     || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
   
-  printf ">>> Packaging $host-$project-$version.\n"
+  printf ">>> Packaging $host-$project-$version$buildstep.\n"
   cd "$_CROSS_STAGE_INSTALL_DIR"
   find . -name \*.la -exec rm -f {} \;
   $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename" ./*
