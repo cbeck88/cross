@@ -1,6 +1,6 @@
 #! /usr/bin/env sh
 
-if [ $UID = 0 ]
+if [ "$UID" = "0" ]
 then
   printf "cross_build.sh must not be run as root.\n"
   exit 1

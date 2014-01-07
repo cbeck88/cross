@@ -76,7 +76,6 @@ build_mingw_toolchain()
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix" "install-strip prefix=/$shortname" || exit 1
-  # rm -rf "$_CROSS_SOURCE_DIR/binutils-$_CROSS_VERSION_BINUTILS"
 
   fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
@@ -128,16 +127,14 @@ build_mingw_toolchain()
   fi
   
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
-                            --prefix=$prefix/$target \
+                            --prefix=/$shortname/$target \
                             --enable-shared --enable-static"
   build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   
-#   case "$_CROSS_VERSION_GCC" in
-#     4.[6-7]*)
-#       rm -rf $builddir/gcc
-#   esac
+  stage_project "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" || exit 1
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip prefix=/$shortname" || exit 1
-  rm -rf "$_CROSS_SOURCE_DIR"/*
+  
+  rm -rf "$_CROSS_STAGE_DIR"/*
 )
