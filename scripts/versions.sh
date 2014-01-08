@@ -3,13 +3,15 @@
 printf ">> Determining GCC dependency known-to-work versions.\n"
 
 case "$_CROSS_VERSION_GCC" in
-  4.6*|4.7*|4.8*|trunk)
+  4.5*|4.6*|4.7*|4.8*|trunk)
     export _CROSS_VERSION_GMP="5.1.3"
     export _CROSS_VERSION_MPFR="3.1.2"
     export _CROSS_VERSION_MPC="1.0.1"
     export _CROSS_VERSION_PPL="1.1"
     export _CROSS_VERSION_ISL="0.12.1"
     export _CROSS_VERSION_CLOOG="0.18.1"
+    export _CROSS_VERSION_CLOOG_PPL="0.15.9"
+    export _CROSS_VERSION_CLOOG_PARMA="0.16.1"
     ;;
   *)
     printf "Unknown GCC version: \n'$_CROSS_VERSION_GCC'\n.\n"

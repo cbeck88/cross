@@ -13,7 +13,7 @@ then
   exit 1
 else
   case "$1" in
-    4.6*|4.7*|4.8*|trunk)
+    4.5*|4.6*|4.7*|4.8*|trunk)
       export _CROSS_VERSION_GCC=$1
       printf ">> Building GCC version $_CROSS_VERSION_GCC.\n"
       ;;
