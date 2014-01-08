@@ -6,7 +6,7 @@ build_with_autotools()
   builddir="$2/$project"
   version="$3"
   host="$4"
-  logdir="$_CROSS_LOG_DIR/prereq-$host/$project"
+  logdir="$_CROSS_LOG_DIR/$host/$project-$version"
   configureargs="$5"
   makebuildargs="$6"
   if [ -z "$7" ]

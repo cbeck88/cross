@@ -74,7 +74,7 @@ build_mingw_toolchain()
                          $gnu_win32_options $_CROSS_PACKAGE_VERSION"
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
-                       "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$prefix" "install-strip prefix=/$shortname" || exit 1
+                       "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/$shortname" || exit 1
 
   fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
@@ -86,7 +86,7 @@ build_mingw_toolchain()
                     --with-sysroot=$_CROSS_STAGE_DIR/$shortname --prefix=$_CROSS_STAGE_DIR/$shortname \
                     --with-gmp=$_CROSS_STAGE_DIR --with-mpfr=$_CROSS_STAGE_DIR --with-mpc=$_CROSS_STAGE_DIR \
                     --with-cloog=$_CROSS_STAGE_DIR --disable-cloog-version-check \
-                    --enable-cloog-backend=isl --with-isl=$_CROSS_STAGE_DIR \
+                    --enable-cloog-backend=isl --with-isl=$_CROSS_STAGE_DIR --disable-isl-version-check \
                     $pploptions \
                     --enable-shared --enable-static --enable-plugins \
                     --disable-multilib --enable-libgomp --disable-libstdcxx-pch \

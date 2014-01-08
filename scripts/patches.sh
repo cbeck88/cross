@@ -15,10 +15,10 @@ esac
 
 case "$_CROSS_VERSION_GCC" in
   4.6*)
-    export _CROSS_PATCHES_GCC="gcc-4.6-texinfo-5.0 gcc-cloog-LANGUAGE_C gcc-4.6-posix_threading"
+    export _CROSS_PATCHES_GCC="gcc-4.6-texinfo-5.0 gcc-cloog-LANGUAGE_C gcc-4.6-posix_threads"
     ;;
   4.7*)
-    export _CROSS_PATCHES_GCC="gcc-4.7-texinfo-5.0 gcc-cloog-LANGUAGE_C gcc-4.7-posix_threading"
+    export _CROSS_PATCHES_GCC="gcc-4.7-texinfo-5.0 gcc-cloog-LANGUAGE_C" #gcc-4.7-posix_threads"
     ;;
   4.8*)
     export _CROSS_PATCHES_GCC=

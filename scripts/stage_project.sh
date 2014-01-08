@@ -8,7 +8,7 @@ stage_project()
   mkdir -p "$_CROSS_STAGE_DIR" && cd "$_CROSS_STAGE_DIR"
   for project in $projects
   do
-    printf ">>> Staging $project.\n"
+    printf ">>> Staging $host-$project.\n"
     tar -xf "$_CROSS_PACKAGE_DIR/$host-$project$_CROSS_COMPRESS_EXT"
   done
 )
