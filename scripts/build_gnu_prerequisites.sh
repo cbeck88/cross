@@ -84,6 +84,7 @@ build_gnu_prerequisites()
                       --with-gmp-prefix=$_CROSS_STAGE_DIR --with-bits=gmp --with-isl-prefix=$_CROSS_STAGE_DIR \
                       $_CROSS_MULTILIB_ENV"
   stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+  stage_project "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
   build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$host" \
                         "$cloogconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
