@@ -23,3 +23,8 @@ case "$_CROSS_VERSION_GCC" in
     export _CROSS_PATCHES_GCC=
     ;;
 esac
+
+case "$_CROSS_VERSION_GCC" in
+  4.7.[0-2])
+    export _CROSS_PATCHES_GCC="$_CROSS_PATCHES_GCC gcc-4.7.pre3-segfault"
+esac

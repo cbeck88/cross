@@ -48,7 +48,9 @@ printf "> Building MinGW compilers.\n"
 case "$_CROSS_BUILD" in
   *linux*)
     build_gnu_toolchain "linux64mingw32" || exit 1
-#     build_gnu_toolchain "linux64mingw64" || exit 1
+    build_gnu_toolchain "linux64mingw64" || exit 1
+    build_gnu_toolchain "linux64mingw32-dw2" || exit 1
+    build_gnu_toolchain "linux64mingw64-sjlj" || exit 1
 #     
 #     build_gnu_toolchain "linux32mingw32" || exit 1
 #     build_gnu_toolchain "linux32mingw64" || exit 1
@@ -57,6 +59,8 @@ case "$_CROSS_BUILD" in
     cd "$_CROSS_COMPILER_DIR"
     rm -rf mingw32
     tar -xf "$_CROSS_PACKAGE_DIR/linux64mingw32_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+    rm -rf mingw64
+    tar -xf "$_CROSS_PACKAGE_DIR/linux64mingw64_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
     ;;
   *cygwin*)
     printf "Warning: building on Cygwin untested!\n"

@@ -22,7 +22,7 @@ build_gnu_prerequisites()
                      --disable-shared --enable-static \
                      --with-gmp=$_CROSS_STAGE_DIR \
                      $_CROSS_MULTILIB_ENV"
-  stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
   build_with_autotools "mpfr" "$prereq_build" "$_CROSS_VERSION_MPFR" "$host" \
                       "$mpfrconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
@@ -32,8 +32,7 @@ build_gnu_prerequisites()
                     --disable-shared --enable-static \
                     --with-gmp=$_CROSS_STAGE_DIR --with-mpfr=$_CROSS_STAGE_DIR \
                     $_CROSS_MULTILIB_ENV"
-  stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
-  stage_project "$host" "mpfr-$_CROSS_VERSION_MPFR" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP mpfr-$_CROSS_VERSION_MPFR" || exit 1
   build_with_autotools "mpc" "$prereq_build" "$_CROSS_VERSION_MPC" "$host" \
                       "$mpcconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
@@ -56,7 +55,7 @@ build_gnu_prerequisites()
                     --disable-shared --enable-static \
                     --with-gmp-prefix=$_CROSS_STAGE_DIR \
                     $_CROSS_MULTILIB_ENV"
-  stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
   build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$host" \
                         "$islconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
@@ -66,8 +65,7 @@ build_gnu_prerequisites()
                       --disable-shared --enable-static \
                       --with-gmp-prefix=$_CROSS_STAGE_DIR --with-bits=gmp --with-isl-prefix=$_CROSS_STAGE_DIR \
                       $_CROSS_MULTILIB_ENV"
-  stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
-  stage_project "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP isl-$_CROSS_VERSION_ISL" || exit 1
   build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$host" \
                         "$cloogconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"

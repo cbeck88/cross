@@ -4,7 +4,8 @@ build_mingw_toolchain()
 (
   host="$1"
   shortname="$2"
-  builddir="$3"
+  abisuffix="$3"
+  builddir="$4"
   
   # Compiler settings
   #TODO make selectable and working: winpthreads build complains that it can't link to -lpthread :-(
@@ -34,9 +35,9 @@ build_mingw_toolchain()
   # MinGW-w64 v3+ changed install prefix meaning
   case "$_CROSS_VERSION_MINGW_W64" in
     trunk|v3.*)
-      mingw_w64prefix="/$shortname/$target" ;;
+      mingw_w64prefix="/$target" ;;
     v1.*|v2.*)
-      mingw_w64prefix="/$shortname/" ;;
+      mingw_w64prefix="/" ;;
     *)
       printf "Error: unknown MinGW-w64 version: $_CROSS_VERSION_MINGW_W64. Check versions.sh.\n"
       exit 1 ;;
@@ -74,7 +75,7 @@ build_mingw_toolchain()
                          $gnu_win32_options $_CROSS_PACKAGE_VERSION"
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
-                       "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/$shortname" || exit 1
+                       "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS tooldir=$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/" || exit 1
 
   fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
@@ -92,34 +93,32 @@ build_mingw_toolchain()
                     --disable-multilib --enable-libgomp --disable-libstdcxx-pch \
                     $gccabioptions \
                     --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
-                    --enable-fully-dynamic-string --enable-libstdcxx-time --enable-libstdcxx-debug \
+                    --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \
                     $gnu_win32_options $_CROSS_GNU_PKGVERSION \
                     LDFLAGS=-static"
-  stage_project "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" || exit 1
-  stage_project "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" || exit 1
+  stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
+  stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
   PATH="$_CROSS_STAGE_DIR/$shortname/bin:$PATH"
-  stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
-  stage_project "$host" "mpfr-$_CROSS_VERSION_MPFR" || exit 1
-  stage_project "$host" "mpc-$_CROSS_VERSION_MPC" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP mpfr-$_CROSS_VERSION_MPFR mpc-$_CROSS_VERSION_MPC \
+                          isl-$_CROSS_VERSION_ISL cloog-$_CROSS_VERSION_CLOOG" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
-      stage_project "$host" "ppl-$_CROSS_VERSION_PPL" || exit 1
+      stage_projects "$host" "ppl-$_CROSS_VERSION_PPL" || exit 1
       ;;
   esac
-  stage_project "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
-  stage_project "$host" "cloog-$_CROSS_VERSION_CLOOG" || exit 1
+
   mkdir -p $_CROSS_STAGE_DIR/$shortname/mingw/include
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-strip-gcc prefix=/$shortname" "-bootstrap" || exit 1
+                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-strip-gcc prefix=/" "$abisuffix-bootstrap" || exit 1
 
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                              --prefix=$mingw_w64prefix --enable-wildcard"
-  stage_project "${host}_$target" "gcc-$_CROSS_VERSION_GCC-bootstrap" || exit 1
+  stage_projects "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap" "$shortname" || exit 1
   build_with_autotools "mingw-w64-crt" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
-  stage_project "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" || exit 1
+  stage_projects "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   # create dummy libpthread, here a copy of another lib
   if [ ! -f "$_CROSS_STAGE_DIR/$target/libpthread.a" ]
   then
@@ -127,26 +126,38 @@ build_mingw_toolchain()
   fi
 
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
-                            --prefix=/$shortname/$target \
+                            --prefix=/$target \
                             --enable-shared --enable-static"
   build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
-                       "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+                       "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" || exit 1
   
-  stage_project "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" || exit 1
+  stage_projects "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip prefix=/$shortname" || exit 1
+                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip prefix=/" || exit 1
 
-  rm -rf "$_CROSS_STAGE_DIR"/*
+  rm -rf "$_CROSS_STAGE_DIR"
   
-  fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2"
+  fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
   # TODO python support stuff
   gdbconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
-                    --prefix=/$shortname \
+                    --prefix=/ \
+                    --enable-static --disable-shared \
                     --with-libexpat-prefix=$PREREQ_INSTALL \
                     --enable-64-bit-bfd --disable-nls \
                     $gnu_win32_options $_CROSS_GNU_PKG_VERSION"
-  stage_project "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
+  stage_projects "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
                        "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1
-  rm -rf "$_CROSS_STAGE_DIR"/*
+  rm -rf "$_CROSS_STAGE_DIR"
+
+  case "$host" in
+    *-mingw32)
+      fetch_source_release "$_CROSS_URL_GNU/make" "make-$_CROSS_VERSION_MAKE" "bz2" || exit 1
+      makeconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
+                         --enable-job-server \
+                         --enable-case-insensitive-file-system --program-prefix='mingw32-' \
+                         LDFLAGS=-static"
+      build_with_autotools "make" "$builddir" "$_CROSS_VERSION_MAKE" "$host" \
+                           "$makeconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  esac
 )

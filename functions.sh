@@ -7,7 +7,7 @@
 . ./scripts/check_prerequisites.sh
 . ./scripts/compress.sh
 . ./scripts/download_sources.sh
-. ./scripts/stage_project.sh
+. ./scripts/stage_projects.sh
 . ./scripts/versions.sh
 # needs versions
 . ./scripts/urls.sh

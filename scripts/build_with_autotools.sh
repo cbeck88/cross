@@ -34,21 +34,23 @@ build_with_autotools()
   fi
   cd "$builddir"
   
-  printf ">>> Configuring $project$buildstep.\n"
+  printf ">> Building $host-$project-$version$buildstep.\n"
+  
+  printf ">>> Configuring...\n"
   # eval for quoting magic
   eval sh "$_CROSS_SOURCE_DIR/$project-$version/configure" $configureargs > "$logdir/configure$buildstep.log" 2>&1 \
      || { printf "Failure configuring $project$buildstep. Check $logdir/configure$buildstep.log for details.\n"; exit 1; }
   
-  printf ">>> Building $project$buildstep.\n"
+  printf ">>> Building...\n"
   make $makebuildargs > "$logdir/build.log" > "$logdir/build$buildstep.log" 2>&1 \
     || { printf "Failure building $project. Check $logdir/build$buildstep.log for details.\n"; exit 1; }
   
-  printf ">>> Installing $project$buildstep.\n"
+  printf ">>> Installing...\n"
   rm -rf "$_CROSS_STAGE_INSTALL_DIR"/*
   eval make $makeinstallargs DESTDIR="$_CROSS_STAGE_INSTALL_DIR" > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
     || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
   
-  printf ">>> Packaging $host-$project-$version$buildstep.\n"
+  printf ">>> Packaging $host-$project-$version$buildstep...\n"
   cd "$_CROSS_STAGE_INSTALL_DIR"
   find . -name \*.la -exec rm -f {} \;
   $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename" ./*
