@@ -1,124 +1,16 @@
---- gcc/config.gcc
-+++ gcc/config.gcc
-@@ -1484,7 +1484,7 @@ i[34567]86-*-pe | i[34567]86-*-cygwin*)
-  use_gcc_stdint=wrap
-  ;;
- i[34567]86-*-mingw* | x86_64-*-mingw*)
-- tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h dbxcoff.h i386/cygming.h i386/mingw32.h"
-+ tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h dbxcoff.h i386/cygming.h"
-  xm_file=i386/xm-mingw32.h
-  case ${target} in
-    x86_64-*-* | *-w64-*)
-@@ -1494,6 +1494,10 @@ i[34567]86-*-mingw* | x86_64-*-mingw*)
-    *)
-      ;;
-  esac
-+ if test x$enable_threads = xposix ; then
-+   tm_file="${tm_file} i386/mingw-pthread.h"
-+ fi
-+ tm_file="${tm_file} i386/mingw32.h"
-  # This makes the logic if mingw's or the w64 feature set has to be used
-  case ${target} in
-    *-w64-*)
-@@ -1562,8 +1566,12 @@ i[34567]86-*-mingw* | x86_64-*-mingw*)
-  use_gcc_stdint=wrap
-  case ${enable_threads} in
-    "" | yes | win32)   thread_file='win32'
--   tmake_file="${tmake_file} i386/t-gthr-win32"
--   ;;
-+     tmake_file="${tmake_file} i386/t-gthr-win32"
-+     ;;
-+   posix)
-+     thread_file='posix'
-+     tmake_file="i386/t-mingw-pthread ${tmake_file}"
-+     ;;
-  esac
-  case ${target} in
-    x86_64-*-mingw*)
 --- gcc/config/i386/cygming.opt
 +++ gcc/config/i386/cygming.opt
-@@ -52,3 +52,5 @@ Compile code that relies on Cygwin DLL wrappers to support C++ operator new/dele
+@@ -52,3 +52,5 @@ Compile code that relies on Cygwin DLL w
  
  posix
  Driver
 +
 +; Retain blank line above
---- gcc/config/i386/mingw-w64.h
-+++ gcc/config/i386/mingw-w64.h
-@@ -1,8 +1,8 @@
- /* Operating system specific defines to be used when targeting GCC for
-    hosting on Windows 32/64 via mingw-w64 runtime, using GNU tools and
-    the Windows API Library.
--   Copyright (C) 2009,
--   2010 Free Software Foundation, Inc.
-+   Copyright (C) 2009, 2010,
-+   2011 Free Software Foundation, Inc.
- 
- This file is part of GCC.
- 
-@@ -20,11 +20,13 @@ You should have received a copy of the GNU General Public License
- along with GCC; see the file COPYING3.  If not see
- <http://www.gnu.org/licenses/>.  */
- 
--/* Enable -municode feature.  */
-+/* Enable -municode feature and support optional pthread support.  */
- 
- #undef CPP_SPEC
--#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT} \
--  %{municode:-DUNICODE}"
-+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT} " \
-+    "%{municode:-DUNICODE} " \
-+    "%{" SPEC_PTHREAD1 ":-D_REENTRANCE} " \
-+    "%{" SPEC_PTHREAD2 ":-U_REENTRANCE} "
- 
- #undef STARTFILE_SPEC
- #define STARTFILE_SPEC "%{shared|mdll:dllcrt2%O%s} \
-@@ -38,6 +40,12 @@ along with GCC; see the file COPYING3.  If not see
- #undef ASM_SPEC
- #define ASM_SPEC "%{m32:--32} %{m64:--64}"
- 
-+#undef LIB_SPEC
-+#define LIB_SPEC "%{pg:-lgmon} %{" SPEC_PTHREAD1 ":-lpthread} " \
-+    "%{" SPEC_PTHREAD2 ": } " \
-+    "%{mwindows:-lgdi32 -lcomdlg32} " \
-+    "-ladvapi32 -lshell32 -luser32 -lkernel32"
-+
- #undef SPEC_32
- #undef SPEC_64
- #if TARGET_64BIT_DEFAULT
---- gcc/config/i386/mingw-w64.opt
-+++ gcc/config/i386/mingw-w64.opt
-@@ -21,3 +21,5 @@
- municode
- Target
- Use unicode startup and define UNICODE macro
-+
-+; Retain blank line above.
---- gcc/config/i386/mingw.opt
-+++ gcc/config/i386/mingw.opt
-@@ -18,6 +18,12 @@
- ; along with GCC; see the file COPYING3.  If not see
- ; <http://www.gnu.org/licenses/>.
- 
-+pthread
-+Driver
-+
-+no-pthread
-+Driver
-+
- Wpedantic-ms-format
- C ObjC C++ ObjC++ Var(warn_pedantic_ms_format) Init(1) Warning
- Warn about none ISO msvcrt scanf/printf width extensions
-@@ -25,3 +31,5 @@ Warn about none ISO msvcrt scanf/printf width extensions
- fset-stack-executable
- Common Report Var(flag_setstackexecutable) Init(1) Optimization
- For nested functions on stack executable permission is set.
-+
-+; Need to retain blank line above.
+\ No newline at end of file
 --- gcc/config/i386/mingw32.h
 +++ gcc/config/i386/mingw32.h
-@@ -47,6 +47,14 @@ along with GCC; see the file COPYING3.  If not see
-     }                \
+@@ -47,6 +47,14 @@ along with GCC; see the file COPYING3.
+     }								\
    while (0)
  
 +#ifndef TARGET_USE_PTHREAD_BY_DEFAULT
@@ -132,7 +24,7 @@
  #undef SUB_LINK_ENTRY32
  #undef SUB_LINK_ENTRY64
  #define SUB_LINK_ENTRY32 "-e _DllMainCRTStartup@12"
-@@ -71,13 +79,17 @@ along with GCC; see the file COPYING3.  If not see
+@@ -71,13 +79,17 @@ along with GCC; see the file COPYING3.
  #define STANDARD_INCLUDE_COMPONENT "MINGW"
  
  #undef CPP_SPEC
@@ -153,9 +45,96 @@
  
  /* Weak symbols do not get resolved if using a Windows dll import lib.
     Make the unwind registration references strong undefs.  */
+--- gcc/config/i386/mingw.opt
++++ gcc/config/i386/mingw.opt
+@@ -18,6 +18,12 @@
+ ; along with GCC; see the file COPYING3.  If not see
+ ; <http://www.gnu.org/licenses/>.
+ 
++pthread
++Driver
++
++no-pthread
++Driver
++
+ Wpedantic-ms-format
+ C ObjC C++ ObjC++ Var(warn_pedantic_ms_format) Init(1) Warning
+ Warn about none ISO msvcrt scanf/printf width extensions
+@@ -25,3 +31,5 @@ Warn about none ISO msvcrt scanf/printf
+ fset-stack-executable
+ Common Report Var(flag_setstackexecutable) Init(1) Optimization
+ For nested functions on stack executable permission is set.
++
++; Need to retain blank line above
+\ No newline at end of file
+--- gcc/config/i386/mingw-pthread.h
++++ gcc/config/i386/mingw-pthread.h
+@@ -0,0 +1,21 @@
++/* Defines that pthread library shall be enabled by default
++   for target.
++   Copyright (C) 2011 Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++#define TARGET_USE_PTHREAD_BY_DEFAULT 1
+--- gcc/config/i386/mingw-w64.h
++++ gcc/config/i386/mingw-w64.h
+@@ -20,11 +20,13 @@ You should have received a copy of the G
+ along with GCC; see the file COPYING3.  If not see
+ <http://www.gnu.org/licenses/>.  */
+ 
+-/* Enable -municode feature.  */
++/* Enable -municode feature and support optional pthread support.  */
+ 
+ #undef CPP_SPEC
+-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT} \
+-  %{municode:-DUNICODE}"
++#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT} " \
++    "%{municode:-DUNICODE} " \
++    "%{" SPEC_PTHREAD1 ":-D_REENTRANCE} " \
++    "%{" SPEC_PTHREAD2 ":-U_REENTRANCE} "
+ 
+ #undef STARTFILE_SPEC
+ #define STARTFILE_SPEC "%{shared|mdll:dllcrt2%O%s} \
+@@ -38,6 +40,12 @@ along with GCC; see the file COPYING3.
+ #undef ASM_SPEC
+ #define ASM_SPEC "%{m32:--32} %{m64:--64}"
+ 
++#undef LIB_SPEC
++#define LIB_SPEC "%{pg:-lgmon} %{" SPEC_PTHREAD1 ":-lpthread} " \
++    "%{" SPEC_PTHREAD2 ": } " \
++    "%{mwindows:-lgdi32 -lcomdlg32} " \
++    "-ladvapi32 -lshell32 -luser32 -lkernel32"
++
+ #undef SPEC_32
+ #undef SPEC_64
+ #if TARGET_64BIT_DEFAULT
+--- gcc/config/i386/mingw-w64.opt
++++ gcc/config/i386/mingw-w64.opt
+@@ -21,3 +21,5 @@
+ municode
+ Target
+ Use unicode startup and define UNICODE macro
++
++; Retain blank line above
+\ No newline at end of file
 --- gcc/config/i386/t-cygming
 +++ gcc/config/i386/t-cygming
-@@ -77,16 +77,23 @@ SHLIB_SLIBDIR_QUAL = @shlib_slibdir_qual@
+@@ -77,16 +77,23 @@ SHLIB_SLIBDIR_QUAL = @shlib_slibdir_qual
  ifndef SHLIB_DLLDIR
  $(error SHLIB_DLLDIR must be defined)
  endif
@@ -167,23 +146,60 @@
 +endif
  
  SHLIB_LINK = $(LN_S) -f $(SHLIB_MAP) $(SHLIB_MAP).def && \
-  if [ ! -d $(SHLIB_DIR) ]; then \
-    mkdir $(SHLIB_DIR); \
-  else true; fi && \
-- $(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -shared -nodefaultlibs \
-+ $(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(SHLIB_PTHREAD_CFLAG) \
-+ -shared -nodefaultlibs \
-  $(SHLIB_MAP).def \
-  -Wl,--out-implib,$(SHLIB_DIR)/$(SHLIB_IMPLIB).tmp \
-  -o $(SHLIB_DIR)/$(SHLIB_SONAME).tmp @multilib_flags@ \
-- $(SHLIB_OBJS) $(SHLIB_LC) && \
-+ $(SHLIB_OBJS) ${SHLIB_PTHREAD_LDFLAG} $(SHLIB_LC) && \
-  if [ -f $(SHLIB_DIR)/$(SHLIB_SONAME) ]; then \
-    mv -f $(SHLIB_DIR)/$(SHLIB_SONAME) \
-    $(SHLIB_DIR)/$(SHLIB_SONAME).backup; \
+ 	if [ ! -d $(SHLIB_DIR) ]; then \
+ 		mkdir $(SHLIB_DIR); \
+ 	else true; fi && \
+-	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -shared -nodefaultlibs \
++	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(SHLIB_PTHREAD_CFLAG) \
++	-shared -nodefaultlibs \
+ 	$(SHLIB_MAP).def \
+ 	-Wl,--out-implib,$(SHLIB_DIR)/$(SHLIB_IMPLIB).tmp \
+ 	-o $(SHLIB_DIR)/$(SHLIB_SONAME).tmp @multilib_flags@ \
+-	$(SHLIB_OBJS) $(SHLIB_LC) && \
++	$(SHLIB_OBJS) ${SHLIB_PTHREAD_LDFLAG} $(SHLIB_LC) && \
+ 	if [ -f $(SHLIB_DIR)/$(SHLIB_SONAME) ]; then \
+ 	  mv -f $(SHLIB_DIR)/$(SHLIB_SONAME) \
+ 		$(SHLIB_DIR)/$(SHLIB_SONAME).backup; \
+--- gcc/config.gcc
++++ gcc/config.gcc
+@@ -1488,7 +1488,7 @@ i[34567]86-*-pe | i[34567]86-*-cygwin*)
+ 	use_gcc_stdint=wrap
+ 	;;
+ i[34567]86-*-mingw* | x86_64-*-mingw*)
+-	tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h dbxcoff.h i386/cygming.h i386/mingw32.h"
++	tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h dbxcoff.h i386/cygming.h"
+ 	xm_file=i386/xm-mingw32.h
+ 	case ${target} in
+ 		x86_64-*-* | *-w64-*)
+@@ -1498,6 +1498,10 @@ i[34567]86-*-mingw* | x86_64-*-mingw*)
+ 		*)
+ 			;;
+ 	esac
++	if test x$enable_threads = xposix ; then
++		tm_file="${tm_file} i386/mingw-pthread.h"
++	fi
++	tm_file="${tm_file} i386/mingw32.h"
+ 	# This makes the logic if mingw's or the w64 feature set has to be used
+ 	case ${target} in
+ 		*-w64-*)
+@@ -1566,8 +1570,12 @@ i[34567]86-*-mingw* | x86_64-*-mingw*)
+ 	use_gcc_stdint=wrap
+ 	case ${enable_threads} in
+ 	  "" | yes | win32)	  thread_file='win32'
+-	  tmake_file="${tmake_file} i386/t-gthr-win32"
+-	  ;;
++     tmake_file="${tmake_file} i386/t-gthr-win32"
++     ;;
++   posix)
++     thread_file='posix'
++     tmake_file="i386/t-mingw-pthread ${tmake_file}"
++     ;;
+ 	esac
+ 	case ${target} in
+ 		x86_64-*-mingw*)
 --- gcc/gthr-posix.h
 +++ gcc/gthr-posix.h
-@@ -65,7 +65,7 @@ typedef struct timespec __gthread_time_t;
+@@ -65,7 +65,7 @@ typedef struct timespec __gthread_time_t
  #define __GTHREAD_COND_INIT PTHREAD_COND_INITIALIZER
  #define __GTHREAD_TIME_INIT {0,0}
  
@@ -197,14 +213,81 @@
 @@ -1697,7 +1697,9 @@ AC_DEFUN([GLIBCXX_CHECK_SYSTEM_ERROR], [
  m4_pushdef([n_syserr], [1])dnl
  m4_foreach([syserr], [EOWNERDEAD, ENOTRECOVERABLE, ENOLINK, EPROTO, ENODATA,
-          ENOSR, ENOSTR, ETIME, EBADMSG, ECANCELED,
--         EOVERFLOW, ENOTSUP, EIDRM, ETXTBSY],
-+         EOVERFLOW, ENOTSUP, EIDRM, ETXTBSY,
-+         ECHILD, ENOSPC, EPERM,
-+         ETIMEDOUT, EWOULDBLOCK],
+ 		      ENOSR, ENOSTR, ETIME, EBADMSG, ECANCELED,
+-		      EOVERFLOW, ENOTSUP, EIDRM, ETXTBSY],
++		      EOVERFLOW, ENOTSUP, EIDRM, ETXTBSY,
++		      ECHILD, ENOSPC, EPERM,
++		      ETIMEDOUT, EWOULDBLOCK],
  [m4_pushdef([SYSERR], m4_toupper(syserr))dnl
  AC_MSG_CHECKING([for syserr])
  AC_CACHE_VAL([glibcxx_cv_system_error[]n_syserr], [
+--- libstdc++-v3/config/os/mingw32/error_constants.h
++++ libstdc++-v3/config/os/mingw32/error_constants.h
+@@ -79,13 +79,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+ //    network_reset = 				ENETRESET,
+ //    network_unreachable = 			ENETUNREACH,
+ //    no_buffer_space = 			ENOBUFS,
+-//    no_child_process = 			ECHILD,
++#ifdef _GLIBCXX_HAVE_ECHILD
++      no_child_process = 			ECHILD,
++#endif
+ //    no_link = 				ENOLINK,
+       no_lock_available = 			ENOLCK,
+ //    no_message_available = 			ENODATA,
+ //    no_message = 				ENOMSG,
+ //    no_protocol_option = 			ENOPROTOOPT,
+-//    no_space_on_device = 			ENOSPC,
++#ifdef _GLIBCXX_HAVE_ENOSPC
++      no_space_on_device = 			ENOSPC,
++#endif
+ //    no_stream_resources = 			ENOSR,
+       no_such_device_or_address = 		ENXIO,
+       no_such_device = 				ENODEV,
+@@ -96,12 +100,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+ //    not_a_stream = 				ENOSTR,
+ //    not_connected = 				ENOTCONN,
+       not_enough_memory = 			ENOMEM,
+-//    not_supported = 				ENOTSUP,
++#ifdef _GLIBCXX_HAVE_ENOTSUP
++      not_supported =        ENOTSUP,
++#endif
+ //    operation_canceled = 			ECANCELED,
+ //    operation_in_progress = 			EINPROGRESS,
+-//    operation_not_permitted = 		EPERM,
++#ifdef _GLIBCXX_HAVE_EPERM
++      operation_not_permitted =    EPERM,
++#endif
+ //    operation_not_supported = 		EOPNOTSUPP,
+-//    operation_would_block = 			EWOULDBLOCK,
++#ifdef _GLIBCXX_HAVE_EWOULDBLOCK
++      operation_would_block =      EWOULDBLOCK,
++#endif
+ //    owner_dead = 				EOWNERDEAD,
+       permission_denied = 			EACCES,
+ //    protocol_error = 				EPROTO,
+@@ -113,13 +123,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+ //    state_not_recoverable = 			ENOTRECOVERABLE,
+ //    stream_timeout = 				ETIME,
+ //    text_file_busy = 				ETXTBSY,
+-//    timed_out = 				ETIMEDOUT,
++#ifdef _GLIBCXX_HAVE_ETIMEDOUT
++      timed_out =        ETIMEDOUT,
++#endif
+       too_many_files_open_in_system = 		ENFILE,
+       too_many_files_open = 			EMFILE,
+       too_many_links = 				EMLINK
+- //   too_many_symbolic_link_levels = 		ELOOP,
+- //   value_too_large = 			EOVERFLOW,
+- //   wrong_protocol_type = 			EPROTOTYPE
++//    too_many_symbolic_link_levels =    ELOOP,
++#ifdef _GLIBCXX_HAVE_EOVERFLOW
++      ,
++      value_too_large =      EOVERFLOW
++#endif
++//    wrong_protocol_type =      EPROTOTYPE
+    };
+ 
+ _GLIBCXX_END_NAMESPACE_VERSION
 --- libstdc++-v3/config.h.in
 +++ libstdc++-v3/config.h.in
 @@ -60,6 +60,9 @@
@@ -252,92 +335,9 @@
  /* Define to 1 if you have the <execinfo.h> header file. */
  #undef HAVE_EXECINFO_H
  
---- libstdc++-v3/config/os/mingw32/error_constants.h
-+++ libstdc++-v3/config/os/mingw32/error_constants.h
-@@ -1,6 +1,6 @@
- // Specific definitions for mingw32 platform  -*- C++ -*-
- 
--// Copyright (C) 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
-+// Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
- //
- // This file is part of the GNU ISO C++ Library.  This library is free
- // software; you can redistribute it and/or modify it under the
-@@ -33,7 +33,6 @@
- #include <bits/c++config.h>
- #include <cerrno>
- 
--
- namespace std _GLIBCXX_VISIBILITY(default)
- {
- _GLIBCXX_BEGIN_NAMESPACE_VERSION
-@@ -79,13 +78,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
- //    network_reset =        ENETRESET,
- //    network_unreachable =      ENETUNREACH,
- //    no_buffer_space =      ENOBUFS,
--//    no_child_process =       ECHILD,
-+#ifdef _GLIBCXX_HAVE_ECHILD
-+      no_child_process =       ECHILD,
-+#endif
- //    no_link =        ENOLINK,
-       no_lock_available =      ENOLCK,
- //    no_message_available =       ENODATA,
- //    no_message =         ENOMSG,
- //    no_protocol_option =       ENOPROTOOPT,
--//    no_space_on_device =       ENOSPC,
-+#ifdef _GLIBCXX_HAVE_ENOSPC
-+      no_space_on_device =       ENOSPC,
-+#endif
- //    no_stream_resources =      ENOSR,
-       no_such_device_or_address =    ENXIO,
-       no_such_device =         ENODEV,
-@@ -96,12 +99,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
- //    not_a_stream =         ENOSTR,
- //    not_connected =        ENOTCONN,
-       not_enough_memory =      ENOMEM,
--//    not_supported =        ENOTSUP,
-+#ifdef _GLIBCXX_HAVE_ENOTSUP
-+      not_supported =        ENOTSUP,
-+#endif
- //    operation_canceled =       ECANCELED,
- //    operation_in_progress =      EINPROGRESS,
--//    operation_not_permitted =    EPERM,
-+#ifdef _GLIBCXX_HAVE_EPERM
-+      operation_not_permitted =    EPERM,
-+#endif
- //    operation_not_supported =    EOPNOTSUPP,
--//    operation_would_block =      EWOULDBLOCK,
-+#ifdef _GLIBCXX_HAVE_EWOULDBLOCK
-+      operation_would_block =      EWOULDBLOCK,
-+#endif
- //    owner_dead =         EOWNERDEAD,
-       permission_denied =      EACCES,
- //    protocol_error =         EPROTO,
-@@ -113,13 +122,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
- //    state_not_recoverable =      ENOTRECOVERABLE,
- //    stream_timeout =         ETIME,
- //    text_file_busy =         ETXTBSY,
--//    timed_out =        ETIMEDOUT,
-+#ifdef _GLIBCXX_HAVE_ETIMEDOUT
-+      timed_out =        ETIMEDOUT,
-+#endif
-       too_many_files_open_in_system =    ENFILE,
-       too_many_files_open =      EMFILE,
-       too_many_links =         EMLINK
-- //   too_many_symbolic_link_levels =    ELOOP,
-- //   value_too_large =      EOVERFLOW,
-- //   wrong_protocol_type =      EPROTOTYPE
-+//    too_many_symbolic_link_levels =    ELOOP,
-+#ifdef _GLIBCXX_HAVE_EOVERFLOW
-+ ,
-+      value_too_large =      EOVERFLOW
-+#endif
-+//    wrong_protocol_type =      EPROTOTYPE
-    };
- 
- _GLIBCXX_END_NAMESPACE_VERSION
 --- libstdc++-v3/configure
 +++ libstdc++-v3/configure
-@@ -17624,6 +17624,171 @@ if test x"$glibcxx_cv_system_error14" = x"yes"; then
+@@ -17624,7 +17624,171 @@ if test x"$glibcxx_cv_system_error14" =
  $as_echo "#define HAVE_ETXTBSY 1" >>confdefs.h
  
  fi
@@ -346,7 +346,7 @@
 +if test "${glibcxx_cv_system_error15+set}" = set; then :
 +  $as_echo_n "(cached) " >&6
 +else
-+
+ 
 +cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 +/* end confdefs.h.  */
 +#include <errno.h>
@@ -508,4 +508,4 @@
 +fi
  
  
- 
+ # For the streamoff typedef.

@@ -44,7 +44,7 @@ build_gnu_prerequisites()
                         --disable-shared --enable-static \
                         --with-gmp=$_CROSS_STAGE_DIR \
                         $_CROSS_MULTILIB_ENV"
-      stage_project "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+      stage_projects "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
       build_with_autotools "ppl" "$prereq_build" "$_CROSS_VERSION_PPL" "$host" \
                            "$pplconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
       rm -rf "$_CROSS_STAGE_DIR"
