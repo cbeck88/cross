@@ -78,7 +78,7 @@ build_mingw_toolchain()
 
   fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
-    4.[5-7]*)
+    4.[6-7]*)
       pploptions="--with-ppl=$_CROSS_STAGE_DIR --disable-ppl-version-check \
                   --with-host-libstdcxx='-lstdc++ -lm -gcc_eh'" ;;
   esac
@@ -104,19 +104,12 @@ build_mingw_toolchain()
   stage_project "$host" "mpfr-$_CROSS_VERSION_MPFR" || exit 1
   stage_project "$host" "mpc-$_CROSS_VERSION_MPC" || exit 1
   case "$_CROSS_VERSION_GCC" in
-    4.[5-7]*)
+    4.[6-7]*)
       stage_project "$host" "ppl-$_CROSS_VERSION_PPL" || exit 1
       ;;
   esac
-  case "$_CROSS_VERSION_GCC" in
-    4.5)
-      stage_project "$host" "cloog-parma-$_CROSS_VERSION_CLOOG_PARMA" || exit
-      ;;
-    4.[6-8]*|trunk)
-      stage_project "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
-      stage_project "$host" "cloog-$_CROSS_VERSION_CLOOG" || exit 1
-      ;;
-  esac
+  stage_project "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
+  stage_project "$host" "cloog-$_CROSS_VERSION_CLOOG" || exit 1
   mkdir -p $_CROSS_STAGE_DIR/$shortname/mingw/include
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-strip-gcc prefix=/$shortname" "-bootstrap" || exit 1
