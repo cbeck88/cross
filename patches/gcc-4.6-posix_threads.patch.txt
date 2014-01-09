@@ -197,6 +197,11 @@
  	esac
  	case ${target} in
  		x86_64-*-mingw*)
+--- gcc/config/i386/t-mingw-pthread
++++ gcc/config/i386/t-mingw-pthread
+@@ -0,0 +1,2 @@
++SHLIB_PTHREAD_CFLAG = -pthread
++SHLIB_PTHREAD_LDFLAG = -Wl,-lpthread
 --- gcc/gthr-posix.h
 +++ gcc/gthr-posix.h
 @@ -65,7 +65,7 @@ typedef struct timespec __gthread_time_t
