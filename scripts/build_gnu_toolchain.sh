@@ -89,13 +89,13 @@ build_gnu_toolchain()
 
         printf ">> Creating $longname toolchain package.\n"
         rm -f "$_CROSS_PACKAGE_DIR/$toolchainpackage"
-        stage_project "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64 mingw-w64-crt-$_CROSS_VERSION_MINGW_W64 \
-                                 mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64$abisuffix" "$shortname" || exit 1
-        stage_project "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS gcc-$_CROSS_VERSION_GCC$abisuffix \
-                                         gdb-$_CROSS_VERSION_GDB" "$shortname" || exit 1
+        stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64 mingw-w64-crt-$_CROSS_VERSION_MINGW_W64 \
+                                  mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
+        stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS gcc-$_CROSS_VERSION_GCC$abisuffix \
+                                          gdb-$_CROSS_VERSION_GDB" "$shortname" || exit 1
         case "$longname" in
           mingw32*|mingw64*)
-            stage_project "$host" "make-$_CROSS_VERSION_MAKE" "$shortname" || exit 1
+            stage_projects "$host" "make-$_CROSS_VERSION_MAKE" "$shortname" || exit 1
         esac
 
         printf ">>> Compressing full toolchain directory.\n"

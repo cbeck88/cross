@@ -10,6 +10,6 @@ stage_projects()
   for project in $projects
   do
     printf ">>> Staging $host-$project.\n"
-    tar -xf "$_CROSS_PACKAGE_DIR/$host-$project$_CROSS_COMPRESS_EXT"
+    tar -xf "$_CROSS_PACKAGE_DIR/$host-$project$_CROSS_COMPRESS_EXT" || exit 1
   done
 )
