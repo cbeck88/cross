@@ -51,16 +51,21 @@ case "$_CROSS_BUILD" in
     build_gnu_toolchain "linux64mingw64" || exit 1
     build_gnu_toolchain "linux64mingw32-dw2" || exit 1
     build_gnu_toolchain "linux64mingw64-sjlj" || exit 1
-#     
-#     build_gnu_toolchain "linux32mingw32" || exit 1
-#     build_gnu_toolchain "linux32mingw64" || exit 1
-
+    
     printf ">> Extracting cross-compilers.\n"
     cd "$_CROSS_COMPILER_DIR"
     rm -rf mingw32
     tar -xf "$_CROSS_PACKAGE_DIR/linux64mingw32_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
     rm -rf mingw64
     tar -xf "$_CROSS_PACKAGE_DIR/linux64mingw64_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+    
+    export PATH=$_CROSS_COMPILER_DIR/mingw32/bin:$_CROSS_COMPILER_DIR/mingw64/bin:$PATH
+    
+    # these need the cross-compilers because GCC's build system is broken.
+    build_gnu_toolchain "linux32mingw32" || exit 1
+    build_gnu_toolchain "linux32mingw64" || exit 1
+    build_gnu_toolchain "linux32mingw32-dw2" || exit 1
+    build_gnu_toolchain "linux32mingw64-sjlj" || exit 1
     ;;
   *cygwin*)
     printf "Warning: building on Cygwin untested!\n"
@@ -83,14 +88,12 @@ esac
 
 printf "> Building native GCC toolchains.\n"
 
-export PATH=$_CROSS_COMPILER_DIR/mingw32/bin:$_CROSS_COMPILER_DIR/mingw64/bin:$PATH
-
 build_gnu_toolchain "mingw32mingw32" || exit 1
-# build_gnu_toolchain "mingw32mingw64" || exit 1
-# build_gnu_toolchain "mingw32mingw32-dw2" || exit 1
-# build_gnu_toolchain "mingw32mingw64-sjlj" || exit 1
+build_gnu_toolchain "mingw32mingw64" || exit 1
+build_gnu_toolchain "mingw32mingw32-dw2" || exit 1
+build_gnu_toolchain "mingw32mingw64-sjlj" || exit 1
 # 
-# build_gnu_toolchain "mingw64mingw32" || exit 1
+build_gnu_toolchain "mingw64mingw32" || exit 1
 # build_gnu_toolchain "mingw64mingw64" || exit 1
 # build_gnu_toolchain "mingw64mingw32-dw2" || exit 1
 # build_gnu_toolchain "mingw64mingw64-sjlj" || exit 1

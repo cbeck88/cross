@@ -77,7 +77,8 @@ build_mingw_toolchain()
   binutilsconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                          --with-sysroot=$_CROSS_STAGE_DIR/$shortname --prefix=$_CROSS_STAGE_DIR/$shortname \
                          --enable-64-bit-bfd --disable-multilib --disable-nls --disable-werror \
-                         $gnu_win32_options $_CROSS_PACKAGE_VERSION"
+                         $gnu_win32_options $_CROSS_PACKAGE_VERSION \
+                         $_CROSS_MULTILIB_ENV"
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS $binutilstooldir" "install-strip $binutilstooldir prefix=/" || exit 1
@@ -102,6 +103,7 @@ build_mingw_toolchain()
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \
                     $gnu_win32_options $_CROSS_GNU_PKGVERSION \
+                    $_CROSS_MULTILIB_ENV \
                     LDFLAGS=-static"
   stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
@@ -149,7 +151,8 @@ build_mingw_toolchain()
                     --enable-static --disable-shared \
                     --with-libexpat-prefix=$PREREQ_INSTALL \
                     --enable-64-bit-bfd --disable-nls \
-                    $gnu_win32_options $_CROSS_GNU_PKG_VERSION"
+                    $gnu_win32_options $_CROSS_GNU_PKG_VERSION \
+                    $_CROSS_MULTILIB_ENV"
   stage_projects "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
                        "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1
@@ -157,9 +160,9 @@ build_mingw_toolchain()
 
   case "$host" in
     *-mingw32)
-      fetch_source_release "$_CROSS_URL_GNU/make" "make-$_CROSS_VERSION_MAKE" "bz2" || exit 1
+      fetch_source_release "$_CROSS_URL_GNU/make" "make-$_CROSS_VERSION_MAKE" "bz2" "$_CROSS_PATCHES_MAKE" || exit 1
       makeconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
-                         --enable-job-server \
+                         --enable-job-server --without-guile \
                          --enable-case-insensitive-file-system --program-prefix='mingw32-' \
                          LDFLAGS=-static"
       build_with_autotools "make" "$builddir" "$_CROSS_VERSION_MAKE" "$host" \

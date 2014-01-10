@@ -9,7 +9,7 @@ _CROSS_STAGE_DIR="/tmp/cross/stage"
 _CROSS_STAGE_INSTALL_DIR="/tmp/cross/stage-install"
 _CROSS_PACKAGE_DIR="$_CROSS_DIR/packages"
 _CROSS_LOG_DIR="$_CROSS_DIR/logs"
-_CROSS_COMPILER_DIR="/tmp/cross"
+_CROSS_COMPILER_DIR="$_CROSS_DIR/compilers"
 
 if [ "$1" = "clean" ]
 then

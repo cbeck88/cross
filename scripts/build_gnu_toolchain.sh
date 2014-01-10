@@ -63,12 +63,12 @@ build_gnu_toolchain()
     x86_64-*-linux*)
       if [ "$host" = "i686-unknown-linux-gnu" ]
       then
-        export _CROSS_MULTILIB_ENV="CC='gcc -m32' CXX='g++ -m32'"
+        export _CROSS_MULTILIB_ENV="CC='gcc -m32' CXX='g++ -m32' AR=ar"
       fi ;;
     i686-*-linux*)
       if [ "$host" = "x86_64-unknown-linux-gnu" ]
       then
-        export _CROSS_MULTILIB_ENV="CC='gcc -m64' CXX='g++ -m64'"
+        export _CROSS_MULTILIB_ENV="CC='gcc -m64' CXX='g++ -m64' AR=ar"
       fi ;;
   esac
   
