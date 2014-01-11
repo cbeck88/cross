@@ -46,53 +46,59 @@ printf "> Setting up directories.\n"
 printf "> Building MinGW compilers.\n"
 
 case "$_CROSS_BUILD" in
-  *linux*)
-    build_gnu_toolchain "linux64mingw32" || exit 1
-    build_gnu_toolchain "linux64mingw64" || exit 1
-    build_gnu_toolchain "linux64mingw32-dw2" || exit 1
-    build_gnu_toolchain "linux64mingw64-sjlj" || exit 1
-    
-    printf ">> Extracting cross-compilers.\n"
-    cd "$_CROSS_COMPILER_DIR"
-    rm -rf mingw32
-    tar -xf "$_CROSS_PACKAGE_DIR/linux64mingw32_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
-    rm -rf mingw64
-    tar -xf "$_CROSS_PACKAGE_DIR/linux64mingw64_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
-    
-    export PATH=$_CROSS_COMPILER_DIR/mingw32/bin:$_CROSS_COMPILER_DIR/mingw64/bin:$PATH
-    
-    # these need the cross-compilers because GCC's build system is broken.
-#     build_gnu_toolchain "linux32mingw32" || exit 1
-#     build_gnu_toolchain "linux32mingw64" || exit 1
-#     build_gnu_toolchain "linux32mingw32-dw2" || exit 1
-#     build_gnu_toolchain "linux32mingw64-sjlj" || exit 1
-    ;;
+  x86_64-*-linux*)
+    shorthost="linux64" ;;
+  i686-*-linux*)
+    shorthost="linux32" ;;
   *cygwin*)
-    printf "Warning: building on Cygwin untested!\n"
-    build_gnu_toolchain "cygwin32mingw32" || exit 1
-    build_gnu_toolchain "cygwin32mingw64" || exit 1
-    ;;
-  *darwin*)
-    printf "Warning: building on Mac untested!\n"
-    build_gnu_toolchain "mac64mingw32" || exit 1
-    build_gnu_toolchain "mac64mingw64" || exit 1
-    ;;
+    shorthost="cygwin32" ;;
+  i686-*-darwin*)
+    shorthost="mac32" ;;
+  x86_64-*-darwin*)
+    shorthost="mac64" ;;
   *mingw*)
-    printf "Error: building on Windows won't work!\n"
-    exit 1
-    ;;
+    printf "Error: building on Windows might work, but is disabled!\n"
+    exit 1 ;;
   *)
     printf "Error: building on $_CROSS_BUILD won't work!\n"
     ;;
 esac
 
+build_gnu_toolchain "${shorthost}mingw32" || exit 1
+build_gnu_toolchain "${shorthost}mingw64" || exit 1
+build_gnu_toolchain "${shorthost}mingw32-dw2" || exit 1
+build_gnu_toolchain "${shorthost}mingw64-sjlj" || exit 1
+
+printf ">> Extracting cross-compilers.\n"
+cd "$_CROSS_COMPILER_DIR"
+rm -rf mingw32*
+tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw32_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+rm -rf mingw64*
+tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw64_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+
+export PATH=$_CROSS_COMPILER_DIR/mingw32/bin:$_CROSS_COMPILER_DIR/mingw64/bin:$PATH
+
 printf "> Building native GCC toolchains.\n"
 
 build_gnu_toolchain "mingw32mingw32" || exit 1
 build_gnu_toolchain "mingw32mingw64" || exit 1
+build_gnu_toolchain "mingw64mingw32" || exit 1
+build_gnu_toolchain "mingw64mingw64" || exit 1
+
+printf ">> Extracting dw2/sjlj cross-compilers.\n"
+cd "$_CROSS_COMPILER_DIR"
+rm -rf mingw32*
+tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw32_gcc-${_CROSS_VERSION_GCC}-dw2_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+rm -rf mingw64*
+tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw64_gcc-${_CROSS_VERSION_GCC}-sjlj_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+
+export PATH=$_CROSS_COMPILER_DIR/mingw32-dw2/bin:$_CROSS_COMPILER_DIR/mingw64-sjlj/bin:$PATH
+
 build_gnu_toolchain "mingw32mingw32-dw2" || exit 1
+build_gnu_toolchain "mingw64mingw32-dw2" || exit 1
 build_gnu_toolchain "mingw32mingw64-sjlj" || exit 1
-# 
+build_gnu_toolchain "mingw64mingw64-sjlj" || exit 1
+
 build_gnu_toolchain "mingw64mingw32" || exit 1
 # build_gnu_toolchain "mingw64mingw64" || exit 1
 # build_gnu_toolchain "mingw64mingw32-dw2" || exit 1

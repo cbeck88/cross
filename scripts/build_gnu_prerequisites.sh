@@ -3,6 +3,7 @@
 build_gnu_prerequisites()
 (
   host="$1"
+  abisuffix="$2"
 
   # Directories
   mkdir -p "$_CROSS_LOG_DIR/prereq-$host"
@@ -46,7 +47,7 @@ build_gnu_prerequisites()
                         $_CROSS_MULTILIB_ENV"
       stage_projects "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
       build_with_autotools "ppl" "$prereq_build" "$_CROSS_VERSION_PPL" "$host" \
-                           "$pplconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+                           "$pplconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
       rm -rf "$_CROSS_STAGE_DIR"
   esac
   

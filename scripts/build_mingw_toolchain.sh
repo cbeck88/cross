@@ -112,7 +112,7 @@ build_mingw_toolchain()
                           isl-$_CROSS_VERSION_ISL cloog-$_CROSS_VERSION_CLOOG" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
-      stage_projects "$host" "ppl-$_CROSS_VERSION_PPL" || exit 1
+      stage_projects "$host" "ppl-$_CROSS_VERSION_PPL$abisuffix" || exit 1
       ;;
   esac
 
@@ -141,7 +141,6 @@ build_mingw_toolchain()
   stage_projects "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs" "$_CROSS_MAKE_ARGS prefix=/$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/" "$abisuffix" || exit 1
-
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
@@ -156,6 +155,8 @@ build_mingw_toolchain()
         pythongdbcppflags="CFLAGS=-I$_CROSS_STAGE_DIR/python/include"
       fi
       pythongdbldflags="LDFLAGS='-static -L"$_CROSS_STAGE_DIR/python"'"
+      mkdir -p "$_CROSS_STAGE_INSTALL_DIR/bin/"
+      cp "$_CROSS_STAGE_DIR/python/python27.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/"
   esac
   gdbconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                     --prefix=/ \

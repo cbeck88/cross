@@ -58,22 +58,8 @@ build_gnu_toolchain()
   
   printf "> Building GCC compiler from $host to $target.\n"
   
-  # linux multilib hackery
-  case "$_CROSS_BUILD" in
-    x86_64-*-linux*)
-      if [ "$host" = "i686-unknown-linux-gnu" ]
-      then
-        export _CROSS_MULTILIB_ENV="CC='gcc -m32' CXX='g++ -m32' AR=ar"
-      fi ;;
-    i686-*-linux*)
-      if [ "$host" = "x86_64-unknown-linux-gnu" ]
-      then
-        export _CROSS_MULTILIB_ENV="CC='gcc -m64' CXX='g++ -m64' AR=ar"
-      fi ;;
-  esac
-  
   printf ">> Building GCC prerequisites.\n"
-  build_gnu_prerequisites "$host" || exit 1
+  build_gnu_prerequisites "$host" "$abisuffix" || exit 1
   
   # Toolchain
   toolchain_build="$_CROSS_BUILD_DIR/$longname"
