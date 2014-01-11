@@ -62,10 +62,10 @@ case "$_CROSS_BUILD" in
     export PATH=$_CROSS_COMPILER_DIR/mingw32/bin:$_CROSS_COMPILER_DIR/mingw64/bin:$PATH
     
     # these need the cross-compilers because GCC's build system is broken.
-    build_gnu_toolchain "linux32mingw32" || exit 1
-    build_gnu_toolchain "linux32mingw64" || exit 1
-    build_gnu_toolchain "linux32mingw32-dw2" || exit 1
-    build_gnu_toolchain "linux32mingw64-sjlj" || exit 1
+#     build_gnu_toolchain "linux32mingw32" || exit 1
+#     build_gnu_toolchain "linux32mingw64" || exit 1
+#     build_gnu_toolchain "linux32mingw32-dw2" || exit 1
+#     build_gnu_toolchain "linux32mingw64-sjlj" || exit 1
     ;;
   *cygwin*)
     printf "Warning: building on Cygwin untested!\n"

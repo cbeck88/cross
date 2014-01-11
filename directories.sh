@@ -24,3 +24,7 @@ mkdir -p "$_CROSS_LOG_DIR"
 mkdir -p "$_CROSS_STAGE_DIR"
 mkdir -p "$_CROSS_STAGE_INSTALL_DIR"
 mkdir -p "$_CROSS_COMPILER_DIR"
+
+rm -rf "$_CROSS_STAGE_DIR"/*
+rm -rf "$_CROSS_STAGE_INSTALL_DIR"/*
+rm -rf "$_CROSS_COMPILER_DIR"/*

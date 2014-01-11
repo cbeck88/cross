@@ -96,6 +96,18 @@ build_gnu_toolchain()
         case "$longname" in
           mingw32*|mingw64*)
             stage_projects "$host" "make-$_CROSS_VERSION_MAKE" "$shortname" || exit 1
+            
+            printf ">>> Fixing libgcc DLL location for GCC 4.8+.\n"
+            if [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_sjlj-1.dll" ]
+            then
+              mv $_CROSS_STAGE_DIR/lib/libgcc_s_sjlj-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
+            elif [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_dw2-1.dll" ]
+            then
+              mv $_CROSS_STAGE_DIR/lib/libgcc_s_dw2-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
+            elif [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_seh-1.dll" ]
+            then
+              mv $_CROSS_STAGE_DIR/lib/libgcc_s_seh-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
+            fi
         esac
 
         printf ">>> Compressing full toolchain directory.\n"

@@ -118,7 +118,7 @@ build_mingw_toolchain()
 
   mkdir -p $_CROSS_STAGE_DIR/$shortname/mingw/include
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS all-gcc" "install-strip-gcc prefix=/" "$abisuffix-bootstrap" || exit 1
+                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS prefix=$_CROSS_STAGE_DIR/$shortname all-gcc" "install-strip-gcc prefix=/" "$abisuffix-bootstrap" || exit 1
 
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                              --prefix=$mingw_w64prefix --enable-wildcard"
@@ -140,19 +140,30 @@ build_mingw_toolchain()
   
   stage_projects "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip prefix=/" "$abisuffix" || exit 1
+                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS prefix=/$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/" "$abisuffix" || exit 1
 
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
-  # TODO python support stuff
+  case "$host" in
+    *-mingw32)
+      ln -s "$_CROSS_DIR/$host-python-$_CROSS_VERSION_PYTHON$_CROSS_COMPRESS_EXT" "$_CROSS_PACKAGE_DIR"
+      stage_projects "$host" "python-$_CROSS_VERSION_PYTHON" "python" || exit 1
+      if [ "$host" = "x86_64-w64-mingw32" ]
+      then
+        pythongdbcppflags="CFLAGS='-I"$_CROSS_STAGE_DIR"/python/include -DMS_WIN64'"
+      else
+        pythongdbcppflags="CFLAGS=-I$_CROSS_STAGE_DIR/python/include"
+      fi
+      pythongdbldflags="LDFLAGS='-static -L"$_CROSS_STAGE_DIR/python"'"
+  esac
   gdbconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                     --prefix=/ \
                     --enable-static --disable-shared \
-                    --with-libexpat-prefix=$PREREQ_INSTALL \
-                    --enable-64-bit-bfd --disable-nls \
-                    $gnu_win32_options $_CROSS_GNU_PKG_VERSION \
-                    $_CROSS_MULTILIB_ENV"
+                    --with-libexpat-prefix=$_CROSS_STAGE_DIR \
+                    --disable-multilib --enable-64-bit-bfd --disable-nls \
+                    --with-python $pythongdbcppflags $pythongdbldflags \
+                    $gnu_win32_options $_CROSS_GNU_PKG_VERSION"
   stage_projects "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
                        "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1

@@ -1,7 +1,8 @@
-src/*
-logs/*
 build/*
-packages/*
+compilers/*
 download/*
+logs/*
+packages/*
+src/*
 stage/*
 stage-install/*
