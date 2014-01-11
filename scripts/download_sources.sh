@@ -12,7 +12,7 @@ fetch_source_release()
 
   if [ -d "$_CROSS_SOURCE_DIR/$name" ]
   then
-    printf ">>> Found previously extracted and patched $file.\n"
+    printf ">>> Found previously extracted and patched $name.\n"
     exit 0
   fi
   

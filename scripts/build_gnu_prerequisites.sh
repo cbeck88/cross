@@ -3,7 +3,13 @@
 build_gnu_prerequisites()
 (
   host="$1"
-  abisuffix="$2"
+  # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for PPL.
+  case "$host-$_CROSS_VERSION_GCC" in
+    *-w64-mingw32-4.[6-7]*)
+      abisuffix="$2" ;; 
+    *)
+      abisuffix= ;;
+  esac
 
   # Directories
   mkdir -p "$_CROSS_LOG_DIR/prereq-$host"
@@ -16,14 +22,14 @@ build_gnu_prerequisites()
                     --enable-cxx \
                     $_CROSS_MULTILIB_ENV"
   build_with_autotools "gmp" "$prereq_build" "$_CROSS_VERSION_GMP" "$host" \
-                      "$gmpconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+                      "$gmpconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
   
   fetch_source_release "$_CROSS_URL_GNU/mpfr" "mpfr-$_CROSS_VERSION_MPFR" "xz" "$_CROSS_PATCHES_MPFR"  || exit 1
   mpfrconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
                      --disable-shared --enable-static \
                      --with-gmp=$_CROSS_STAGE_DIR \
                      $_CROSS_MULTILIB_ENV"
-  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix" || exit 1
   build_with_autotools "mpfr" "$prereq_build" "$_CROSS_VERSION_MPFR" "$host" \
                       "$mpfrconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
@@ -33,7 +39,7 @@ build_gnu_prerequisites()
                     --disable-shared --enable-static \
                     --with-gmp=$_CROSS_STAGE_DIR --with-mpfr=$_CROSS_STAGE_DIR \
                     $_CROSS_MULTILIB_ENV"
-  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP mpfr-$_CROSS_VERSION_MPFR" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix mpfr-$_CROSS_VERSION_MPFR" || exit 1
   build_with_autotools "mpc" "$prereq_build" "$_CROSS_VERSION_MPC" "$host" \
                       "$mpcconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
@@ -45,7 +51,7 @@ build_gnu_prerequisites()
                         --disable-shared --enable-static \
                         --with-gmp=$_CROSS_STAGE_DIR \
                         $_CROSS_MULTILIB_ENV"
-      stage_projects "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+      stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix" || exit 1
       build_with_autotools "ppl" "$prereq_build" "$_CROSS_VERSION_PPL" "$host" \
                            "$pplconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
       rm -rf "$_CROSS_STAGE_DIR"
@@ -56,7 +62,7 @@ build_gnu_prerequisites()
                     --disable-shared --enable-static \
                     --with-gmp-prefix=$_CROSS_STAGE_DIR \
                     $_CROSS_MULTILIB_ENV"
-  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix" || exit 1
   build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$host" \
                         "$islconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
@@ -66,7 +72,7 @@ build_gnu_prerequisites()
                       --disable-shared --enable-static \
                       --with-gmp-prefix=$_CROSS_STAGE_DIR --with-bits=gmp --with-isl-prefix=$_CROSS_STAGE_DIR \
                       $_CROSS_MULTILIB_ENV"
-  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP isl-$_CROSS_VERSION_ISL" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix isl-$_CROSS_VERSION_ISL" || exit 1
   build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$host" \
                         "$cloogconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"

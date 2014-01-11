@@ -3,6 +3,7 @@
 build_gnu_toolchain()
 (
   longname="$1"
+  toolchainpackage=${longname}_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT
 
   case "$longname" in
     linux32*)
@@ -44,6 +45,11 @@ build_gnu_toolchain()
     *mingw64-sjlj)
       case "$_CROSS_VERSION_GCC" in
         4.[6-7]*)
+          toolchainpackagenosjlj=`echo "$toolchainpackage" | sed 's/-sjlj//'`
+          if [ ! -h "$_CROSS_PACKAGE_DIR/$toolchainpackage" ]
+          then
+            ln -s "$_CROSS_PACKAGE_DIR/$toolchainpackagenosjlj" "$_CROSS_PACKAGE_DIR/$toolchainpackage"
+          fi
           printf ">> Skipping 64-bit gcc-$_CROSS_VERSION_GCC-sjlj build because this is the only one possible.\n"
           exit 0 ;;
       esac
@@ -66,7 +72,6 @@ build_gnu_toolchain()
   
   case "$shortname" in
     mingw*)
-      toolchainpackage=${longname}_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT
       if [ -f "$_CROSS_PACKAGE_DIR/$toolchainpackage" ]
       then
         printf ">> $longname toolchain package already created.\n"

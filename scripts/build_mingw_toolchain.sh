@@ -108,7 +108,7 @@ build_mingw_toolchain()
   stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
   PATH="$_CROSS_STAGE_DIR/$shortname/bin:$PATH"
-  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP mpfr-$_CROSS_VERSION_MPFR mpc-$_CROSS_VERSION_MPC \
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix mpfr-$_CROSS_VERSION_MPFR mpc-$_CROSS_VERSION_MPC \
                           isl-$_CROSS_VERSION_ISL cloog-$_CROSS_VERSION_CLOOG" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
