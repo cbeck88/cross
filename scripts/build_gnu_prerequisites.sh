@@ -17,6 +17,7 @@ build_gnu_prerequisites()
                     $_CROSS_MULTILIB_ENV"
   build_with_autotools "gmp" "$prereq_build" "$_CROSS_VERSION_GMP" "$host" \
                       "$gmpconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
+  package "$host" "gmp-$_CROSS_VERSION_GMP" "$abisuffix" || exit 1
   
   fetch_source_release "$_CROSS_URL_GNU/mpfr" "mpfr-$_CROSS_VERSION_MPFR" "xz" "$_CROSS_PATCHES_MPFR"  || exit 1
   mpfrconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
@@ -26,6 +27,7 @@ build_gnu_prerequisites()
   stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix" || exit 1
   build_with_autotools "mpfr" "$prereq_build" "$_CROSS_VERSION_MPFR" "$host" \
                       "$mpfrconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  package "$host" "mpfr-$_CROSS_VERSION_MPFR" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_GNU/mpc" "mpc-$_CROSS_VERSION_MPC" "gz" || exit 1
@@ -36,6 +38,7 @@ build_gnu_prerequisites()
   stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix mpfr-$_CROSS_VERSION_MPFR" || exit 1
   build_with_autotools "mpc" "$prereq_build" "$_CROSS_VERSION_MPC" "$host" \
                       "$mpcconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  package "$host" "mpc-$_CROSS_VERSION_MPC" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
   
   case "$_CROSS_VERSION_GCC" in
@@ -48,6 +51,7 @@ build_gnu_prerequisites()
       stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix" || exit 1
       build_with_autotools "ppl" "$prereq_build" "$_CROSS_VERSION_PPL" "$host" \
                            "$pplconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
+      package "$host" "ppl-$_CROSS_VERSION_PPL" "$abisuffix" || exit 1
       rm -rf "$_CROSS_STAGE_DIR"
   esac
   
@@ -59,6 +63,7 @@ build_gnu_prerequisites()
   stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix" || exit 1
   build_with_autotools "isl" "$prereq_build" "$_CROSS_VERSION_ISL" "$host" \
                         "$islconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  package "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_CLOOG" "cloog-$_CROSS_VERSION_CLOOG" "gz" || exit 1
@@ -69,6 +74,7 @@ build_gnu_prerequisites()
   stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix isl-$_CROSS_VERSION_ISL" || exit 1
   build_with_autotools "cloog" "$prereq_build" "$_CROSS_VERSION_CLOOG" "$host" \
                         "$cloogconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  package "$host" "cloog-$_CROSS_VERSION_CLOOG" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
 
   fetch_source_release "$_CROSS_URL_EXPAT" "expat-$_CROSS_VERSION_EXPAT" "gz" || exit 1
@@ -77,6 +83,7 @@ build_gnu_prerequisites()
                       $_CROSS_MULTILIB_ENV"
   build_with_autotools "expat" "$prereq_build" "$_CROSS_VERSION_EXPAT" "$host" \
                         "$expatconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
+  package "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   case $host in
     *-*-mingw32|*-*-cygwin)
       fetch_source_release "$_CROSS_URL_GNU/libiconv" "libiconv-$_CROSS_VERSION_LIBICONV" "gz" || exit 1
@@ -85,5 +92,6 @@ build_gnu_prerequisites()
                              $_CROSS_MULTILIB_ENV"
       build_with_autotools "libiconv" "$prereq_build" "$_CROSS_VERSION_LIBICONV" "$host" \
                            "$libiconvconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+      package "$host" "libiconv-$_CROSS_VERSION_LIBICONV" || exit 1
   esac
 )

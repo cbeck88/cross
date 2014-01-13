@@ -16,6 +16,7 @@ build_with_autotools()
     makeinstallargs="$7"
   fi
   buildstep="$8"
+  builddir="$builddir-$version$buildstep"
   
   mkdir -p "$logdir"
     
@@ -49,11 +50,6 @@ build_with_autotools()
   rm -rf "$_CROSS_STAGE_INSTALL_DIR"
   eval make $makeinstallargs DESTDIR="$_CROSS_STAGE_INSTALL_DIR" > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
     || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
-  
-  printf ">>> Packaging $host-$project-$version$buildstep...\n"
-  cd "$_CROSS_STAGE_INSTALL_DIR"
-  find . -name \*.la -exec rm -f {} \;
-  $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename" ./*
   
   cd "$_CROSS_DIR"
 )

@@ -46,7 +46,7 @@ build_mingw_toolchain()
 
   case $host in
     *-*-mingw32)
-      gnu_win32_options="--disable-win32-registry --disable-rpath --disable-werror --with-libiconv-prefix=$prereq_install" ;;
+      gnu_win32_options="--disable-win32-registry --disable-rpath --disable-werror --with-libiconv-prefix=$_CROSS_STAGE_DIR" ;;
     *)
       gnu_win32_options= ;;
   esac
@@ -67,7 +67,8 @@ build_mingw_toolchain()
                                  --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
   build_with_autotools "mingw-w64-headers" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
-  
+  package "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" || exit 1
+
   # Binutils
   case "$host" in
     *-mingw32)
@@ -83,7 +84,9 @@ build_mingw_toolchain()
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS $binutilstooldir" "install-strip $binutilstooldir prefix=/" || exit 1
+  package "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" || exit 1
 
+  # GCC - bootstrap
   fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
@@ -99,7 +102,7 @@ build_mingw_toolchain()
                     --enable-shared --enable-static --enable-plugins \
                     --disable-multilib --enable-libgomp --disable-libstdcxx-pch \
                     $gccabioptions \
-                    --enable-languages=c,lto,c++,objc,obj-c++,fortran,java \
+                     \
                     --enable-fully-dynamic-string --enable-libstdcxx-time \
                     --disable-nls --disable-werror --enable-checking=release \
                     --with-gnu-as --with-gnu-ld \
@@ -107,8 +110,11 @@ build_mingw_toolchain()
                     $_CROSS_MULTILIB_ENV \
                     LDFLAGS=-static"
   stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
-  stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
-  PATH="$_CROSS_STAGE_DIR/$shortname/bin:$PATH"
+  if [ "$host" = "$_CROSS_BUILD" ]
+  then
+    stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
+    PATH="$_CROSS_STAGE_DIR/$shortname/bin:$PATH"
+  fi
   stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$prereqabisuffix mpfr-$_CROSS_VERSION_MPFR mpc-$_CROSS_VERSION_MPC \
                           isl-$_CROSS_VERSION_ISL cloog-$_CROSS_VERSION_CLOOG" || exit 1
   case "$_CROSS_VERSION_GCC" in
@@ -116,16 +122,19 @@ build_mingw_toolchain()
       stage_projects "$host" "ppl-$_CROSS_VERSION_PPL$prereqabisuffix" || exit 1
       ;;
   esac
-
   mkdir -p $_CROSS_STAGE_DIR/$shortname/mingw/include
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS prefix=$_CROSS_STAGE_DIR/$shortname all-gcc" "install-strip-gcc prefix=/" "$abisuffix-bootstrap" || exit 1
+                       "$gccconfigureargs --enable-languages=c,c++,lto" "$_CROSS_MAKE_ARGS prefix=$_CROSS_STAGE_DIR/$shortname all-gcc" "install-strip-gcc prefix=/" "$abisuffix-bootstrap" || exit 1
+  package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap" || exit 1
 
+  # MinGW-w4 CRT
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
                              --prefix=$mingw_w64prefix --enable-wildcard"
   stage_projects "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap" "$shortname" || exit 1
   build_with_autotools "mingw-w64-crt" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
+  package "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" || exit 1
+  
   stage_projects "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   # create dummy libpthread, here a copy of another lib
   if [ ! -f "$_CROSS_STAGE_DIR/$target/libpthread.a" ]
@@ -134,14 +143,21 @@ build_mingw_toolchain()
   fi
 
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
-                            --prefix=/$target --bindir=/$target/bin \
+                            --prefix=/$target \
                             --enable-shared --enable-static"
   build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
-                       "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" || exit 1
-  
+                       "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+  case "$host" in
+    *-*-mingw32)
+      mkdir -p "$_CROSS_STAGE_INSTALL_DIR/mingw32/bin"
+      mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/mingw32/bin/" || exit 1
+    *)
+      mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/mingw32/bin/" || exit 1
+  package "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" || exit 1
+  gcclanguages="--enable-languages=c,lto,c++,objc,obj-c++,fortran,java"
   stage_projects "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs" "$_CROSS_MAKE_ARGS prefix=/$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/" "$abisuffix" || exit 1
+                       "$gccconfigureargs $gcclanguages" "$_CROSS_MAKE_ARGS prefix=/$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/" "$abisuffix" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
