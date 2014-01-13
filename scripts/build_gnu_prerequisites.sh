@@ -3,13 +3,7 @@
 build_gnu_prerequisites()
 (
   host="$1"
-  # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for PPL.
-  case "$host-$_CROSS_VERSION_GCC" in
-    *-w64-mingw32-4.[6-7]*)
-      abisuffix="$2" ;; 
-    *)
-      abisuffix= ;;
-  esac
+  abisuffix="$2"
 
   # Directories
   mkdir -p "$_CROSS_LOG_DIR/prereq-$host"

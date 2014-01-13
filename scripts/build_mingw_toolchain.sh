@@ -4,8 +4,9 @@ build_mingw_toolchain()
 (
   host="$1"
   shortname="$2"
-  abisuffix="$3"
-  builddir="$4"
+  builddir="$3"
+  abisuffix="$4"
+  prereqabisuffix="$5"
   
   # Compiler settings
   #TODO make selectable and working: winpthreads build complains that it can't link to -lpthread :-(
@@ -108,11 +109,11 @@ build_mingw_toolchain()
   stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
   PATH="$_CROSS_STAGE_DIR/$shortname/bin:$PATH"
-  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$abisuffix mpfr-$_CROSS_VERSION_MPFR mpc-$_CROSS_VERSION_MPC \
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$prereqabisuffix mpfr-$_CROSS_VERSION_MPFR mpc-$_CROSS_VERSION_MPC \
                           isl-$_CROSS_VERSION_ISL cloog-$_CROSS_VERSION_CLOOG" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
-      stage_projects "$host" "ppl-$_CROSS_VERSION_PPL$abisuffix" || exit 1
+      stage_projects "$host" "ppl-$_CROSS_VERSION_PPL$prereqabisuffix" || exit 1
       ;;
   esac
 
@@ -133,7 +134,7 @@ build_mingw_toolchain()
   fi
 
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
-                            --prefix=/$target \
+                            --prefix=/$target --bindir=/$target/bin \
                             --enable-shared --enable-static"
   build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" || exit 1
