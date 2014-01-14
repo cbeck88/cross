@@ -145,19 +145,46 @@ build_mingw_toolchain()
   winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
                             --prefix=/$target \
                             --enable-shared --enable-static"
-  build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
+  build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "${host}_$target" \
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
-  case "$host" in
-    *-*-mingw32)
-      mkdir -p "$_CROSS_STAGE_INSTALL_DIR/mingw32/bin"
-      mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/mingw32/bin/" || exit 1
-    *)
-      mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/mingw32/bin/" || exit 1
-  package "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" || exit 1
+  if [ ! -f "$_CROSS_PACKAGE_DIR/${host}_$target-mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64$_CROSS_COMPRESS_EXT" ]
+  then
+    case "$host" in
+      *-w64-mingw32)
+        mkdir -p "$_CROSS_STAGE_INSTALL_DIR/bin"
+        mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+        ;;
+      *)
+        mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$target/lib/" || exit 1
+        rmdir "$_CROSS_STAGE_INSTALL_DIR/$target/bin/" || exit 1
+        ;;
+    esac
+  fi
+  package "${host}_$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" || exit 1
+  
   gcclanguages="--enable-languages=c,lto,c++,objc,obj-c++,fortran,java"
-  stage_projects "$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
+  stage_projects "${host}_$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                        "$gccconfigureargs $gcclanguages" "$_CROSS_MAKE_ARGS prefix=/$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/" "$abisuffix" || exit 1
+
+  if [ ! -f "$_CROSS_PACKAGE_DIR/${host}_$target-gcc-$_CROSS_VERSION_GCC$abisuffix$_CROSS_COMPRESS_EXT" ]
+  then
+    case "$host-$_CROSS_VERSION_GCC" in
+      *-*-mingw32-4.8*)
+        printf ">>> Fixing libgcc DLL location for GCC 4.8+.\n"
+        if [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_sjlj-1.dll" ]
+        then
+          mv $_CROSS_STAGE_DIR/lib/libgcc_s_sjlj-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
+        elif [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_dw2-1.dll" ]
+        then
+          mv $_CROSS_STAGE_DIR/lib/libgcc_s_dw2-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
+        elif [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_seh-1.dll" ]
+        then
+          mv $_CROSS_STAGE_DIR/lib/libgcc_s_seh-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
+        fi
+    esac
+  fi
+  package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
@@ -185,6 +212,7 @@ build_mingw_toolchain()
   stage_projects "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
                        "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1
+  package "${host}_$target" "gdb-$_CROSS_VERSION_GDB" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
 
   case "$host" in
@@ -196,5 +224,6 @@ build_mingw_toolchain()
                          LDFLAGS=-static"
       build_with_autotools "make" "$builddir" "$_CROSS_VERSION_MAKE" "$host" \
                            "$makeconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+      package "$host" "make-$_CROSS_VERSION_MAKE" || exit 1
   esac
 )

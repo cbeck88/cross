@@ -6,7 +6,6 @@ build_with_autotools()
   builddir="$2/$project"
   version="$3"
   host="$4"
-  logdir="$_CROSS_LOG_DIR/$host/$project-$version"
   configureargs="$5"
   makebuildargs="$6"
   if [ -z "$7" ]
@@ -16,8 +15,9 @@ build_with_autotools()
     makeinstallargs="$7"
   fi
   buildstep="$8"
-  builddir="$builddir-$version$buildstep"
   
+  builddir="$builddir-$version$buildstep"
+  logdir="$_CROSS_LOG_DIR/$host/$project-$version$buildstep"
   mkdir -p "$logdir"
     
   packagename="$host-$project-$version$buildstep$_CROSS_COMPRESS_EXT"
