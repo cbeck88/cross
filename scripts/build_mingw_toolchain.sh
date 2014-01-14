@@ -15,18 +15,24 @@ build_mingw_toolchain()
     mingw32)
       printf "> Building compiler targetting 32-bit Windows.\n"
       target="i686-w64-mingw32"
-      gccabioptions="$gccabioptions --enable-sjlj-exceptions --disable-dw2-exceptions" ;;
+      mingww64crtoptions="--enable-lib32 --disable-lib64"
+      #gccabioptions="$gccabioptions --enable-sjlj-exceptions --disable-dw2-exceptions"
+      ;;
     mingw32-dw2)
       printf "> Building compiler targetting 32-bit Windows (dw2).\n"
       target="i686-w64-mingw32"
+      mingww64crtoptions="--enable-lib32 --disable-lib64"
       gccabioptions="$gccabioptions --enable-dw2-exceptions --disable-sjlj-exceptions" ;;
     mingw64)
       printf "> Building compiler targetting 64-bit Windows.\n"
       target="x86_64-w64-mingw32"
-      gccabioptions="$gccabioptions --enable-sjlj-exceptions --disable-dw2-exceptions" ;;
+      mingww64crtoptions="--disable-lib32 --enable-lib64"
+      #gccabioptions="$gccabioptions --enable-seh-exceptions --disable-sjlj-exceptions"
+      ;;
     mingw64-sjlj)
       printf "> Building compiler targetting 64-bit Windows (sjlj).\n"
       target="x86_64-w64-mingw32"
+      mingww64crtoptions="--disable-lib32 --enable-lib64"
       gccabioptions="$gccabioptions --enable-sjlj-exceptions --disable-dw2-exceptions" ;;
     *)
       printf "Invalid shortname \'$shortname\' passed to build_mingw_toolchain.\n";
@@ -129,7 +135,8 @@ build_mingw_toolchain()
 
   # MinGW-w4 CRT
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
-                             --prefix=$mingw_w64prefix --enable-wildcard"
+                             --prefix=$mingw_w64prefix \
+                             --enable-wildcard $mingww64crtoptions"
   stage_projects "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap" "$shortname" || exit 1
   build_with_autotools "mingw-w64-crt" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
@@ -172,16 +179,15 @@ build_mingw_toolchain()
     case "$host-$_CROSS_VERSION_GCC" in
       *-*-mingw32-4.8*)
         printf ">>> Fixing libgcc DLL location for GCC 4.8+.\n"
-        if [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_sjlj-1.dll" ]
-        then
-          mv $_CROSS_STAGE_DIR/lib/libgcc_s_sjlj-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
-        elif [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_dw2-1.dll" ]
-        then
-          mv $_CROSS_STAGE_DIR/lib/libgcc_s_dw2-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
-        elif [ -f "$_CROSS_STAGE_DIR/lib/libgcc_s_seh-1.dll" ]
-        then
-          mv $_CROSS_STAGE_DIR/lib/libgcc_s_seh-1.dll $_CROSS_STAGE_DIR/bin/ || exit 1
-        fi
+        for dll in "$_CROSS_STAGE_DIR/$shortname/lib/libgcc_s_sjlj-1.dll \
+                    $_CROSS_STAGE_DIR/$shortname/lib/libgcc_s_dw2-1.dll \
+                    $_CROSS_STAGE_DIR/$shortname/lib/libgcc_s_seh-1.dll"
+        do
+          if [ -f "$dll" ]
+          then
+            mv "$dll" "$_CROSS_STAGE_DIR/$shortname/bin/" || exit 1
+          fi
+        done
     esac
   fi
   package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix" || exit 1

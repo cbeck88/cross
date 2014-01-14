@@ -21,7 +21,6 @@ build_gnu_toolchain()
       target="x86_64-w64-mingw32" ;;
     *mingw32-dw2)
       shortname="mingw32-dw2"
-      gccexceptionabi="--enable-dw2-exceptions --disable-sjlj-exceptions"
       abisuffix="-dw2"
       target="i686-w64-mingw32" ;;
     *mingw64-sjlj)
@@ -36,7 +35,6 @@ build_gnu_toolchain()
           exit 0 ;;
       esac
       shortname="mingw64-sjlj"
-      gccexceptionabi="--disable-seh-exceptions --enable-sjlj-exceptions"
       abisuffix="-sjlj"
       target="x86_64-w64-mingw32" ;;
     *)
@@ -90,10 +88,9 @@ build_gnu_toolchain()
 
         printf ">> Creating $longname toolchain package.\n"
         rm -f "$_CROSS_PACKAGE_DIR/$toolchainpackage"
-        stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64 mingw-w64-crt-$_CROSS_VERSION_MINGW_W64 \
-                                  mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
+        stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64 mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
         stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS gcc-$_CROSS_VERSION_GCC$abisuffix \
-                                          gdb-$_CROSS_VERSION_GDB" "$shortname" || exit 1
+                                          mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64 gdb-$_CROSS_VERSION_GDB" "$shortname" || exit 1
                                           
         case "$longname" in
           mingw32*|mingw64*)
