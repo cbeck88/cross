@@ -230,7 +230,7 @@ build_mingw_toolchain()
   stage_projects "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
                        "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1
-  rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/lib"*.a "$_CROSS_STAGE_INSTALL_DIR/include/"*.h
+  rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/"*.a "$_CROSS_STAGE_INSTALL_DIR/include/"*.h
   package "${host}_$target" "gdb-$_CROSS_VERSION_GDB" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
 
