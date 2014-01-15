@@ -78,7 +78,10 @@ build_mingw_toolchain()
   # Binutils
   case "$host" in
     *-mingw32)
-      binutilstooldir="tooldir=/"
+      if [ "$host" = "$target" ]
+      then
+        binutilstooldir="tooldir=/"
+      fi
       ;;
   esac
   fetch_source_release "$_CROSS_URL_GNU/binutils" "binutils-$_CROSS_VERSION_BINUTILS" "bz2" || exit 1
@@ -90,6 +93,10 @@ build_mingw_toolchain()
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
                        "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS $binutilstooldir" "install-strip $binutilstooldir prefix=/" || exit 1
+  if [ "$host" = "$target" ]
+  then
+    rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/lib"*.a "$_CROSS_STAGE_INSTALL_DIR/include/"*.h
+  fi
   package "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" || exit 1
 
   # GCC - bootstrap
@@ -179,24 +186,29 @@ build_mingw_toolchain()
     case "$host-$_CROSS_VERSION_GCC" in
       *-*-mingw32-4.8*)
         printf ">>> Fixing libgcc DLL location for GCC 4.8+.\n"
-        for dll in "$_CROSS_STAGE_DIR/$shortname/lib/libgcc_s_sjlj-1.dll \
-                    $_CROSS_STAGE_DIR/$shortname/lib/libgcc_s_dw2-1.dll \
-                    $_CROSS_STAGE_DIR/$shortname/lib/libgcc_s_seh-1.dll"
-        do
-          if [ -f "$dll" ]
-          then
-            mv "$dll" "$_CROSS_STAGE_DIR/$shortname/bin/" || exit 1
-          fi
-        done
+        if [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" ]
+        then
+          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_dw2-1.dll" ]
+        then
+          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_dw2-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_seh-1.dll" ]
+        then
+          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_seh-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+        fi
     esac
   fi
+  rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/libiberty.a"
   package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
   case "$host" in
     *-mingw32)
-      ln -s "$_CROSS_DIR/$host-python-$_CROSS_VERSION_PYTHON$_CROSS_COMPRESS_EXT" "$_CROSS_PACKAGE_DIR"
+      if [ ! -h "$_CROSS_PACKAGE_DIR/$host-python-$_CROSS_VERSION_PYTHON$_CROSS_COMPRESS_EXT" ]
+      then
+        ln -s "$_CROSS_DIR/$host-python-$_CROSS_VERSION_PYTHON$_CROSS_COMPRESS_EXT" "$_CROSS_PACKAGE_DIR"
+      fi
       stage_projects "$host" "python-$_CROSS_VERSION_PYTHON" "python" || exit 1
       if [ "$host" = "x86_64-w64-mingw32" ]
       then
@@ -218,6 +230,7 @@ build_mingw_toolchain()
   stage_projects "$host" "expat-$_CROSS_VERSION_EXPAT" || exit 1
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
                        "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1
+  rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/lib"*.a "$_CROSS_STAGE_INSTALL_DIR/include/"*.h
   package "${host}_$target" "gdb-$_CROSS_VERSION_GDB" || exit 1
   rm -rf "$_CROSS_STAGE_DIR"
 
