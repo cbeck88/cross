@@ -240,7 +240,8 @@ build_mingw_toolchain()
       makeconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
                          --enable-job-server --without-guile \
                          --enable-case-insensitive-file-system --program-prefix='mingw32-' \
-                         LDFLAGS=-static"
+                         LDFLAGS=-static \
+                         $gnu_win32_options"
       build_with_autotools "make" "$builddir" "$_CROSS_VERSION_MAKE" "$host" \
                            "$makeconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
       package "$host" "make-$_CROSS_VERSION_MAKE" || exit 1

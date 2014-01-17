@@ -99,4 +99,8 @@ build_gnu_toolchain "mingw64mingw32-dw2" || exit 1
 build_gnu_toolchain "mingw32mingw64-sjlj" || exit 1
 build_gnu_toolchain "mingw64mingw64-sjlj" || exit 1
 
+rm -rf "$_CROSS_STAGE_DIR"
+rm -rf "$_CROSS_STAGE_INSTALL_DIR"
+rm -rf "$_CROSS_COMPILER_DIR"
+
 printf "All done!\n"
