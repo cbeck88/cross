@@ -261,6 +261,7 @@ build_mingw_toolchain()
       mkdir -p "$_CROSS_STAGE_INSTALL_DIR/bin/"
       cp "$_CROSS_STAGE_DIR/python/python27.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/"
   esac
+  rm -rf "$_CROSS_STAGE_INSTALL_DIR/include/gdb"
   package "${host}_$target" "gdb-$_CROSS_VERSION_GDB" || exit 1
 
   case "$host" in
@@ -273,6 +274,7 @@ build_mingw_toolchain()
                          $gnu_win32_options"
       build_with_autotools "make" "$builddir" "$_CROSS_VERSION_MAKE" "$host" \
                            "$makeconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
+      rm -f "$_CROSS_STAGE_INSTALL_DIR/include/gnumake.h"
       package "$host" "make-$_CROSS_VERSION_MAKE" || exit 1
   esac
   
