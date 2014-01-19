@@ -62,7 +62,7 @@ build_gnu_prerequisites()
   rm -rf "$_CROSS_STAGE_DIR"
   
   fetch_source_release "$_CROSS_URL_CLOOG" "cloog-$_CROSS_VERSION_CLOOG" "gz" || exit 1
-  cloogconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
+  cloogconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
                       --disable-shared --enable-static \
                       --with-gmp-prefix=$_CROSS_STAGE_DIR --with-bits=gmp --with-isl-prefix=$_CROSS_STAGE_DIR \
                       $_CROSS_MULTILIB_ENV"
@@ -73,7 +73,7 @@ build_gnu_prerequisites()
   rm -rf "$_CROSS_STAGE_DIR"
 
   fetch_source_release "$_CROSS_URL_EXPAT" "expat-$_CROSS_VERSION_EXPAT" "gz" || exit 1
-  expatconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
+  expatconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
                       --disable-shared --enable-static \
                       $_CROSS_MULTILIB_ENV"
   build_with_autotools "expat" "$prereq_build" "$_CROSS_VERSION_EXPAT" "$host" \
@@ -82,7 +82,7 @@ build_gnu_prerequisites()
   case $host in
     *-*-mingw32|*-*-cygwin)
       fetch_source_release "$_CROSS_URL_GNU/libiconv" "libiconv-$_CROSS_VERSION_LIBICONV" "gz" || exit 1
-      libiconvconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=$prereq_install \
+      libiconvconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
                              --disable-shared --enable-static \
                              $_CROSS_MULTILIB_ENV"
       build_with_autotools "libiconv" "$prereq_build" "$_CROSS_VERSION_LIBICONV" "$host" \

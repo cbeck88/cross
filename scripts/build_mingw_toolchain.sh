@@ -38,17 +38,6 @@ build_mingw_toolchain()
       printf "Invalid shortname \'$shortname\' passed to build_mingw_toolchain.\n";
       exit 1;
   esac
-  
-  # MinGW-w64 v3+ changed install prefix meaning
-  case "$_CROSS_VERSION_MINGW_W64" in
-    trunk|v3.*)
-      mingw_w64prefix="/$target" ;;
-    v1.*|v2.*)
-      mingw_w64prefix="/" ;;
-    *)
-      printf "Error: unknown MinGW-w64 version: $_CROSS_VERSION_MINGW_W64. Check versions.sh.\n"
-      exit 1 ;;
-  esac
 
   case $host in
     *-*-mingw32)
@@ -68,19 +57,20 @@ build_mingw_toolchain()
     ln -s "$_CROSS_SOURCE_DIR/mingw-w64-$_CROSS_VERSION_MINGW_W64/mingw-w64-libraries/winpthreads" "$_CROSS_SOURCE_DIR/mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64"
   fi
 
-  # MinGW-w64 headers
+## MinGW-w64 headers
   mingw_w64headersconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
-                                 --prefix=$mingw_w64prefix --enable-sdk=all --enable-secure-api"
+                                 --prefix=/$target \
+                                 --enable-sdk=all --enable-secure-api"
   build_with_autotools "mingw-w64-headers" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$mingw_w64headersconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
   package "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" || exit 1
 
-  # Binutils
+## Binutils
   case "$host" in
     *-mingw32)
       if [ "$host" = "$target" ]
       then
-        binutilstooldir="tooldir=/"
+        binutilstooldir="tooldir=$_CROSS_STAGE_DIR/$shortname"
       fi
       ;;
   esac
@@ -92,14 +82,15 @@ build_mingw_toolchain()
                          $_CROSS_MULTILIB_ENV"
                          #CC=$host-gcc
   build_with_autotools "binutils" "$builddir" "$_CROSS_VERSION_BINUTILS" "${host}_$target" \
-                       "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS $binutilstooldir" "install-strip $binutilstooldir prefix=/" || exit 1
+                       "$binutilsconfigureargs" "$_CROSS_MAKE_ARGS $binutilstooldir" "install-strip $binutilstooldir" || exit 1
+  mv "$_CROSS_STAGE_INSTALL_DIR$_CROSS_STAGE_DIR/$shortname"/* "$_CROSS_STAGE_INSTALL_DIR/"
   if [ "$host" = "$target" ]
   then
     rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/lib"*.a "$_CROSS_STAGE_INSTALL_DIR/include/"*.h
   fi
   package "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" || exit 1
 
-  # GCC - bootstrap
+## GCC - bootstrap
   fetch_source_release "$_CROSS_URL_GNU/gcc/gcc-$_CROSS_VERSION_GCC" "gcc-$_CROSS_VERSION_GCC" "bz2" "$_CROSS_PATCHES_GCC" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
@@ -125,11 +116,14 @@ build_mingw_toolchain()
   stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   if [ "$host" = "$_CROSS_BUILD" ]
   then
-    stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
+    stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS"|| exit 1
     PATH="$_CROSS_STAGE_DIR/$shortname/bin:$PATH"
   fi
-  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$prereqabisuffix mpfr-$_CROSS_VERSION_MPFR mpc-$_CROSS_VERSION_MPC \
-                          isl-$_CROSS_VERSION_ISL cloog-$_CROSS_VERSION_CLOOG" || exit 1
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$prereqabisuffix \
+                          mpfr-$_CROSS_VERSION_MPFR \
+                          mpc-$_CROSS_VERSION_MPC \
+                          isl-$_CROSS_VERSION_ISL \
+                          cloog-$_CROSS_VERSION_CLOOG" || exit 1
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
       stage_projects "$host" "ppl-$_CROSS_VERSION_PPL$prereqabisuffix" || exit 1
@@ -137,28 +131,40 @@ build_mingw_toolchain()
   esac
   mkdir -p $_CROSS_STAGE_DIR/$shortname/mingw/include
   build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs --enable-languages=c,c++,lto" "$_CROSS_MAKE_ARGS prefix=$_CROSS_STAGE_DIR/$shortname all-gcc" "install-strip-gcc prefix=/" "$abisuffix-bootstrap" || exit 1
+                       "$gccconfigureargs --enable-languages=c,c++,lto" "$_CROSS_MAKE_ARGS all-gcc" "install-strip-gcc" "$abisuffix-bootstrap" || exit 1
+  mv "$_CROSS_STAGE_INSTALL_DIR$_CROSS_STAGE_DIR/$shortname"/* "$_CROSS_STAGE_INSTALL_DIR/"
   package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap" || exit 1
 
-  # MinGW-w4 CRT
+## MinGW-w64 CRT
   mingw_w64crtconfigureargs="--host=$target --build=$_CROSS_BUILD --target=$target \
-                             --prefix=$mingw_w64prefix \
+                             --prefix=/$target \
                              --enable-wildcard $mingww64crtoptions"
-  stage_projects "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap" "$shortname" || exit 1
+  if [ "$host" = "$_CROSS_BUILD" ]
+  then
+    stage_projects "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap \
+                                      binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
+  fi
+  stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   build_with_autotools "mingw-w64-crt" "$builddir" "$_CROSS_VERSION_MINGW_W64" "$target" \
                        "$mingw_w64crtconfigureargs" "$_CROSS_MAKE_ARGS" "install" || exit 1
   package "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" || exit 1
-  
-  stage_projects "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
+
+## MinGW-w64 winpthreads
+  winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
+                            --prefix=/$target \
+                            --enable-shared --enable-static"
+  if [ "$host" = "$_CROSS_BUILD" ]
+  then
+    stage_projects "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap \
+                                      binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
+  fi
+  stage_projects "$target" "mingw-w64-crt-$_CROSS_VERSION_MINGW_W64 \
+                            mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
   # create dummy libpthread, here a copy of another lib
   if [ ! -f "$_CROSS_STAGE_DIR/$target/libpthread.a" ]
   then
     cp "$_CROSS_STAGE_DIR/$shortname/$target/lib/libuser32.a" "$_CROSS_STAGE_DIR/$shortname/$target/lib/libpthread.a"
   fi
-
-  winpthreadsconfigureargs="--host=$target --build=$_CROSS_BUILD \
-                            --prefix=/$target \
-                            --enable-shared --enable-static"
   build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "${host}_$target" \
                        "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
   if [ ! -f "$_CROSS_PACKAGE_DIR/${host}_$target-mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64$_CROSS_COMPRESS_EXT" ]
@@ -175,33 +181,53 @@ build_mingw_toolchain()
     esac
   fi
   package "${host}_$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" || exit 1
-  
-  gcclanguages="--enable-languages=c,lto,c++,objc,obj-c++,fortran,java"
-  stage_projects "${host}_$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
-  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
-                       "$gccconfigureargs $gcclanguages" "$_CROSS_MAKE_ARGS prefix=/$_CROSS_STAGE_DIR/$shortname" "install-strip prefix=/" "$abisuffix" || exit 1
 
+## GCC
+  gcclanguages="--enable-languages=c,lto,c++,objc,obj-c++,fortran,java"
+  stage_projects "$host" "gmp-$_CROSS_VERSION_GMP$prereqabisuffix \
+                          mpfr-$_CROSS_VERSION_MPFR \
+                          mpc-$_CROSS_VERSION_MPC \
+                          isl-$_CROSS_VERSION_ISL \
+                          cloog-$_CROSS_VERSION_CLOOG" || exit 1
+  case "$_CROSS_VERSION_GCC" in
+    4.[6-7]*)
+      stage_projects "$host" "ppl-$_CROSS_VERSION_PPL$prereqabisuffix" || exit 1
+      ;;
+  esac
+  if [ "$host" = "$_CROSS_BUILD" ]
+  then
+    stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS" "$shortname" || exit 1
+  fi
+  stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64 \
+                            mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
+  stage_projects "${host}_$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
+  mkdir -p "$_CROSS_STAGE_DIR/$shortname/mingw/include"
+    
+  build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
+                       "$gccconfigureargs $gcclanguages" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
   if [ ! -f "$_CROSS_PACKAGE_DIR/${host}_$target-gcc-$_CROSS_VERSION_GCC$abisuffix$_CROSS_COMPRESS_EXT" ]
   then
     case "$host-$_CROSS_VERSION_GCC" in
       *-*-mingw32-4.8*)
         printf ">>> Fixing libgcc DLL location for GCC 4.8+.\n"
-        if [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" ]
+        if [ -f "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_sjlj-1.dll" ]
         then
-          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
-        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_dw2-1.dll" ]
+          mv "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_sjlj-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$shortname/bin/" || exit 1
+        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_dw2-1.dll" ]
         then
-          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_dw2-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
-        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_seh-1.dll" ]
+          mv "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_dw2-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$shortname/bin/" || exit 1
+        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_seh-1.dll" ]
         then
-          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_seh-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+          mv "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_seh-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$shortname/bin/" || exit 1
         fi
     esac
   fi
+  # move from prefix=sysroot DESTDIR mess to normal install location without shortname
+  mv "$_CROSS_STAGE_INSTALL_DIR$_CROSS_STAGE_DIR/$shortname"/* "$_CROSS_STAGE_INSTALL_DIR/"
   rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/libiberty.a"
+  rm -rf "$_CROSS_STAGE_INSTALL_DIR/mingw"
   package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix" || exit 1
-  rm -rf "$_CROSS_STAGE_DIR"
-  
+ 
   fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
   case "$host" in
     *-mingw32)
@@ -217,8 +243,6 @@ build_mingw_toolchain()
         pythongdbcppflags="CFLAGS=-I$_CROSS_STAGE_DIR/python/include"
       fi
       pythongdbldflags="LDFLAGS='-static -L"$_CROSS_STAGE_DIR/python"'"
-      mkdir -p "$_CROSS_STAGE_INSTALL_DIR/bin/"
-      cp "$_CROSS_STAGE_DIR/python/python27.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/"
   esac
   gdbconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                     --prefix=/ \
@@ -231,8 +255,13 @@ build_mingw_toolchain()
   build_with_autotools "gdb" "$builddir" "$_CROSS_VERSION_GDB" "${host}_$target" \
                        "$gdbconfigureargs" "$_CROSS_MAKE_ARGS" "install INSTALL_PROGRAM='install -s'" || exit 1
   rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/"*.a "$_CROSS_STAGE_INSTALL_DIR/include/"*.h
+  case "$host" in
+    *-mingw32)
+      stage_projects "$host" "python-$_CROSS_VERSION_PYTHON" "python" || exit 1
+      mkdir -p "$_CROSS_STAGE_INSTALL_DIR/bin/"
+      cp "$_CROSS_STAGE_DIR/python/python27.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/"
+  esac
   package "${host}_$target" "gdb-$_CROSS_VERSION_GDB" || exit 1
-  rm -rf "$_CROSS_STAGE_DIR"
 
   case "$host" in
     *-mingw32)
@@ -246,4 +275,6 @@ build_mingw_toolchain()
                            "$makeconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
       package "$host" "make-$_CROSS_VERSION_MAKE" || exit 1
   esac
+  
+  rm -rf "$_CROSS_STAGE_DIR"
 )
