@@ -207,25 +207,25 @@ build_mingw_toolchain()
                        "$gccconfigureargs $gcclanguages" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
   if [ ! -f "$_CROSS_PACKAGE_DIR/${host}_$target-gcc-$_CROSS_VERSION_GCC$abisuffix$_CROSS_COMPRESS_EXT" ]
   then
+    # move from prefix=sysroot DESTDIR mess to normal install location without shortname
+    mv "$_CROSS_STAGE_INSTALL_DIR$_CROSS_STAGE_DIR/$shortname"/* "$_CROSS_STAGE_INSTALL_DIR/"
     case "$host-$_CROSS_VERSION_GCC" in
       *-*-mingw32-4.8*)
         printf ">>> Fixing libgcc DLL location for GCC 4.8+.\n"
-        if [ -f "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_sjlj-1.dll" ]
+        if [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" ]
         then
-          mv "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_sjlj-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$shortname/bin/" || exit 1
-        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_dw2-1.dll" ]
+          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_dw2-1.dll" ]
         then
-          mv "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_dw2-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$shortname/bin/" || exit 1
-        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_seh-1.dll" ]
+          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_dw2-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+        elif [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_seh-1.dll" ]
         then
-          mv "$_CROSS_STAGE_INSTALL_DIR/$shortname/lib/libgcc_s_seh-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$shortname/bin/" || exit 1
+          mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_seh-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
         fi
     esac
+    rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/libiberty.a"
+    rm -rf "$_CROSS_STAGE_INSTALL_DIR/mingw"
   fi
-  # move from prefix=sysroot DESTDIR mess to normal install location without shortname
-  mv "$_CROSS_STAGE_INSTALL_DIR$_CROSS_STAGE_DIR/$shortname"/* "$_CROSS_STAGE_INSTALL_DIR/"
-  rm -f "$_CROSS_STAGE_INSTALL_DIR/lib/libiberty.a"
-  rm -rf "$_CROSS_STAGE_INSTALL_DIR/mingw"
   package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix" || exit 1
  
   fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
