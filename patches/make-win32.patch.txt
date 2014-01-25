@@ -1,5 +1,5 @@
---- getopt.c
-+++ getopt.c
+--- getopt.c	2014-01-25 12:03:26.221379611 +0100
++++ getopt.c	2014-01-25 12:05:50.913901729 +0100
 @@ -434,6 +434,9 @@ _getopt_initialize (int argc, char *cons
      }
    else
@@ -10,25 +10,26 @@
  #endif
  
    return optstring;
-@@ -676,7 +679,7 @@ _getopt_internal (int argc, char *const
-    optarg = nameend + 1;
-        else
-    {
--     if (opterr)
-+     if (opterr) {
-       if (argv[optind - 1][1] == '-')
-        /* --option */
-        fprintf (stderr,
-@@ -688,6 +691,7 @@ _getopt_internal (int argc, char *const
-         _("%s: option '%c%s' doesn't allow an argument\n"),
-         argv[0], argv[optind - 1][0], pfound->name);
- 
+@@ -677,6 +680,7 @@ _getopt_internal (int argc, char *const
+ 	      else
+ 		{
+ 		  if (opterr)
++      {
+ 		   if (argv[optind - 1][1] == '-')
+ 		    /* --option */
+ 		    fprintf (stderr,
+@@ -687,7 +691,8 @@ _getopt_internal (int argc, char *const
+ 		    fprintf (stderr,
+ 		     _("%s: option '%c%s' doesn't allow an argument\n"),
+ 		     argv[0], argv[optind - 1][0], pfound->name);
+-
 +      }
-      nextchar += strlen (nextchar);
++        
+ 		  nextchar += strlen (nextchar);
  
-      optopt = pfound->val;
---- main.c
-+++ main.c
+ 		  optopt = pfound->val;
+--- main.c	2014-01-25 12:03:26.221379611 +0100
++++ main.c	2014-01-25 12:04:21.999336378 +0100
 @@ -1105,8 +1105,11 @@ main (int argc, char **argv, char **envp
  
  #endif
@@ -41,8 +42,8 @@
    /* The cast to void shuts up compiler warnings on systems that
       disable NLS.  */
    (void)bindtextdomain (PACKAGE, LOCALEDIR);
---- makeint.h
-+++ makeint.h
+--- makeint.h	2014-01-25 12:03:26.221379611 +0100
++++ makeint.h	2014-01-25 12:04:21.999336378 +0100
 @@ -409,7 +409,7 @@ extern int unixy_shell;
  # define MAP_VMSCOMMA   0x0000
  #endif
