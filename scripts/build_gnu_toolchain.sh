@@ -95,6 +95,7 @@ build_gnu_toolchain()
         case "$longname" in
           mingw32*|mingw64*)
             stage_projects "$host" "make-$_CROSS_VERSION_MAKE" "$shortname" || exit 1
+            cp "$_CROSS_DIR/envsetup/${shortname}env.cmd" "$_CROSS_STAGE_DIR/$shortname/" || exit 1
         esac
 
         printf ">>> Compressing full toolchain directory.\n"

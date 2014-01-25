@@ -16,17 +16,22 @@ package()
   logdir="$_CROSS_LOG_DIR/$host/$projectwithversion"
   mkdir -p "$logdir"
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$packagename$_CROSS_COMPRESS_EXT" ]
-  then
-    printf "unreachable package().\n"
-    exit 1;
-  fi
-
   printf ">>> Packaging $packagename...\n"
   cd "$_CROSS_STAGE_INSTALL_DIR"
   find . -name \*.la -exec rm -f {} \;
   find . -type d -empty -delete
-  $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$packagename$_CROSS_COMPRESS_EXT" ./* > "$logdir/package$packagesuffix.log" 2>&1 \
+  
+  case $host in
+    *-mingw32)
+      compress="7za -l -bd -mx9 a"
+      ext=".7z"
+      ;;
+    *)
+      compress="tar -Jhcf"
+      ext=".tar.xz"
+  esac
+
+  $compress "$_CROSS_PACKAGE_DIR/$packagename$ext" * > "$logdir/package$packagesuffix.log" 2>&1 \
     || { printf "Failure packaging $project$packagesuffix. Check $logdir/install$packagesuffix.log for details.\n"; exit 1; }
 
   cd "$_CROSS_DIR"
