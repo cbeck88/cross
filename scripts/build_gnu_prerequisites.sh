@@ -4,13 +4,14 @@ build_gnu_prerequisites()
 (
   host="$1"
   abisuffix="$2"
+  ext=$(package_ext $host)
 
   # Directories
   mkdir -p "$_CROSS_LOG_DIR/prereq-$host"
   prereq_build="$_CROSS_BUILD_DIR/prereq-$_CROSS_VERSION_GCC-$host"
   mkdir -p "$prereq_build" && cd "$prereq_build"
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$host-gmp-$_CROSS_VERSION_GMP$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$host-gmp-$_CROSS_VERSION_GMP$ext" ]
   then
     printf ">> Found gmp-$_CROSS_VERSION_GMP package.\n"
   else
@@ -24,7 +25,7 @@ build_gnu_prerequisites()
     package "$host" "gmp-$_CROSS_VERSION_GMP" "$abisuffix" || exit 1
   fi
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$host-mpfr-$_CROSS_VERSION_MPFR$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$host-mpfr-$_CROSS_VERSION_MPFR$ext" ]
   then
     printf ">> Found mpfr-$_CROSS_VERSION_MPFR package.\n"
   else
@@ -37,10 +38,9 @@ build_gnu_prerequisites()
                          "$mpfrconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
     copy_licenses "mpfr-$_CROSS_VERSION_MPFR" "COPYING COPYING.LESSER" || exit 1
     package "$host" "mpfr-$_CROSS_VERSION_MPFR" || exit 1
-    rm -rf "$_CROSS_STAGE_DIR"
   fi
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$host-mpc-$_CROSS_VERSION_MPC$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$host-mpc-$_CROSS_VERSION_MPC$ext" ]
   then
     printf ">> Found mpc-$_CROSS_VERSION_MPC package.\n"
   else
@@ -53,12 +53,11 @@ build_gnu_prerequisites()
                          "$mpcconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
     copy_licenses "mpc-$_CROSS_VERSION_MPC" "COPYING.LESSER" || exit 1
     package "$host" "mpc-$_CROSS_VERSION_MPC" || exit 1
-    rm -rf "$_CROSS_STAGE_DIR"
   fi
 
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
-      if [ -f "$_CROSS_PACKAGE_DIR/$host-gmp-$_CROSS_VERSION_GMP$_CROSS_COMPRESS_EXT" ]
+      if [ -f "$_CROSS_PACKAGE_DIR/$host-gmp-$_CROSS_VERSION_GMP$ext" ]
       then
         printf ">> Found make-$_CROSS_VERSION_MAKE package.\n"
       else
@@ -71,11 +70,10 @@ build_gnu_prerequisites()
                              "$pplconfigureargs" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
         copy_licenses "ppl-$_CROSS_VERSION_PPL" "COPYING" || exit 1
         package "$host" "ppl-$_CROSS_VERSION_PPL" "$abisuffix" || exit 1
-        rm -rf "$_CROSS_STAGE_DIR"
       fi
   esac
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$host-isl-$_CROSS_VERSION_ISL$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$host-isl-$_CROSS_VERSION_ISL$ext" ]
   then
     printf ">> Found isl-$_CROSS_VERSION_ISL package.\n"
   else
@@ -88,10 +86,9 @@ build_gnu_prerequisites()
                          "$islconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
     copy_licenses "isl-$_CROSS_VERSION_ISL" "LICENSE" || exit 1
     package "$host" "isl-$_CROSS_VERSION_ISL" || exit 1
-    rm -rf "$_CROSS_STAGE_DIR"
   fi
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$host-cloog-$_CROSS_VERSION_CLOOG$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$host-cloog-$_CROSS_VERSION_CLOOG$ext" ]
   then
     printf ">> Found cloog-$_CROSS_VERSION_CLOOG package.\n"
   else
@@ -105,10 +102,9 @@ build_gnu_prerequisites()
                          "$cloogconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
     copy_licenses "cloog-$_CROSS_VERSION_CLOOG" "LICENSE" || exit 1
     package "$host" "cloog-$_CROSS_VERSION_CLOOG" || exit 1
-    rm -rf "$_CROSS_STAGE_DIR"
   fi
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$host-expat-$_CROSS_VERSION_EXPAT$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$host-expat-$_CROSS_VERSION_EXPAT$ext" ]
   then
     printf ">> Found expat-$_CROSS_VERSION_EXPAT package.\n"
   else
@@ -124,7 +120,7 @@ build_gnu_prerequisites()
 
   case $host in
     *-*-mingw32|*-*-cygwin)
-      if [ -f "$_CROSS_PACKAGE_DIR/$host-libiconv-$_CROSS_VERSION_LIBICONV$_CROSS_COMPRESS_EXT" ]
+      if [ -f "$_CROSS_PACKAGE_DIR/$host-libiconv-$_CROSS_VERSION_LIBICONV$ext" ]
       then
         printf ">> Found libibconv-$_CROSS_VERSION_LIBICONV package.\n"
       else

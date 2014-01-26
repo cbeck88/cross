@@ -3,8 +3,38 @@
 build_gnu_toolchain()
 (
   longname="$1"
-  toolchainpackage=${longname}_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT
 
+  case "$longname" in
+    linux32*)
+      host="i686-unknown-linux-gnu" ;;
+    linux64*)
+      host="x86_64-unknown-linux-gnu" ;;
+    cygwin32*)
+      host="i686-pc-cygwin" ;;
+    cygwin64*)
+      host="x86_64-pc-cygwin" ;;
+    mingw32*)
+      host="i686-w64-mingw32"
+      # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for GMP/PPL.
+      case "$_CROSS_VERSION_GCC" in
+        4.[6-7]*)
+          prereqabisuffix="$abisuffix" ;; 
+      esac ;;
+    mingw64*)
+      host="x86_64-w64-mingw32"
+      # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for GMP/PPL.
+      case "$_CROSS_VERSION_GCC" in
+        4.[6-7]*)
+          prereqabisuffix="$abisuffix" ;;
+      esac ;;
+    *)
+      printf "Error: unknown longname: $longname.\n"
+      exit 1 ;;
+  esac
+  
+  ext=$(package_ext $host)
+  toolchainpackage=${longname}_gcc-${_CROSS_VERSION_GCC}_rubenvb$ext
+  
   case "$longname" in
     *mingw32)
       shortname="mingw32"
@@ -42,34 +72,6 @@ build_gnu_toolchain()
       exit 1 ;;
   esac
   
-  case "$longname" in
-    linux32*)
-      host="i686-unknown-linux-gnu" ;;
-    linux64*)
-      host="x86_64-unknown-linux-gnu" ;;
-    cygwin32*)
-      host="i686-pc-cygwin" ;;
-    cygwin64*)
-      host="x86_64-pc-cygwin" ;;
-    mingw32*)
-      host="i686-w64-mingw32"
-      # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for GMP/PPL.
-      case "$_CROSS_VERSION_GCC" in
-        4.[6-7]*)
-          prereqabisuffix="$abisuffix" ;; 
-      esac ;;
-    mingw64*)
-      host="x86_64-w64-mingw32"
-      # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for GMP/PPL.
-      case "$_CROSS_VERSION_GCC" in
-        4.[6-7]*)
-          prereqabisuffix="$abisuffix" ;;
-      esac ;;
-    *)
-      printf "Error: unknown longname: $longname.\n"
-      exit 1 ;;
-  esac      
-  
   printf "> Building GCC compiler from $host to $target.\n"
   
   printf ">> Building GCC prerequisites.\n"
@@ -100,8 +102,9 @@ build_gnu_toolchain()
 
         printf ">>> Compressing full toolchain directory.\n"
         cd "$_CROSS_STAGE_DIR"
-        $_CROSS_COMPRESS_TAR "$_CROSS_PACKAGE_DIR/$toolchainpackage" ./*
-        rm -rf "$_CROSS_STAGE_DIR"
+        compress=$(package_compress $host)
+        $compress "$_CROSS_PACKAGE_DIR/$toolchainpackage" *
+        rm -rf "$_CROSS_STAGE_DIR"/*
       fi
       ;;
     *)

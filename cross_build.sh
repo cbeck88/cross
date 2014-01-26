@@ -70,11 +70,13 @@ build_gnu_toolchain "${shorthost}mingw32-dw2" || exit 1
 build_gnu_toolchain "${shorthost}mingw64-sjlj" || exit 1
 
 printf ">> Extracting cross-compilers.\n"
+decompress=$(package_decompress $host)
+ext=$(package_ext $host)
 cd "$_CROSS_COMPILER_DIR"
 rm -rf mingw32*
-tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw32_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+$decompress "$_CROSS_PACKAGE_DIR/${shorthost}mingw32_gcc-${_CROSS_VERSION_GCC}_rubenvb$ext" || exit 1
 rm -rf mingw64*
-tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw64_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+$decompress "$_CROSS_PACKAGE_DIR/${shorthost}mingw64_gcc-${_CROSS_VERSION_GCC}_rubenvb$ext" || exit 1
 
 export PATH=$_CROSS_COMPILER_DIR/mingw32/bin:$_CROSS_COMPILER_DIR/mingw64/bin:$PATH
 
@@ -88,9 +90,9 @@ build_gnu_toolchain "mingw64mingw64" || exit 1
 printf ">> Extracting dw2/sjlj cross-compilers.\n"
 cd "$_CROSS_COMPILER_DIR"
 rm -rf mingw32*
-tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw32-dw2_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+$decompress "$_CROSS_PACKAGE_DIR/${shorthost}mingw32-dw2_gcc-${_CROSS_VERSION_GCC}_rubenvb$ext" || exit 1
 rm -rf mingw64*
-tar -xf "$_CROSS_PACKAGE_DIR/${shorthost}mingw64-sjlj_gcc-${_CROSS_VERSION_GCC}_rubenvb$_CROSS_COMPRESS_EXT" || exit 1
+$decompress "$_CROSS_PACKAGE_DIR/${shorthost}mingw64-sjlj_gcc-${_CROSS_VERSION_GCC}_rubenvb$ext" || exit 1
 
 export PATH=$_CROSS_COMPILER_DIR/mingw32-dw2/bin:$_CROSS_COMPILER_DIR/mingw64-sjlj/bin:$PATH
 

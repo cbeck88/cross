@@ -47,11 +47,11 @@ build_with_autotools()
     || { printf "Failure building $project. Check $logdir/build$buildstep.log for details.\n"; exit 1; }
 
   printf ">>> Installing...\n"
-  rm -rf "$_CROSS_STAGE_INSTALL_DIR"
+  rm -rf "$_CROSS_STAGE_INSTALL_DIR"/*
   eval make $makeinstallargs DESTDIR=$_CROSS_STAGE_INSTALL_DIR > "$logdir/install.log" > "$logdir/install$buildstep.log" 2>&1 \
     || { printf "Failure installing $project. Check $logdir/install$buildstep.log for details.\n"; exit 1; }
 
-  rm -rf "$_CROSS_STAGE_DIR"
+  rm -rf "$_CROSS_STAGE_DIR"/*
 
   cd "$_CROSS_DIR"
 )

@@ -7,7 +7,7 @@ build_mingw_toolchain()
   builddir="$3"
   abisuffix="$4"
   prereqabisuffix="$5"
-
+  
   # Compiler settings
   #TODO make selectable and working: winpthreads build complains that it can't link to -lpthread :-(
   gccabioptions="--enable-threads=posix"
@@ -79,6 +79,10 @@ build_mingw_toolchain()
                     $_CROSS_MULTILIB_ENV \
                     LDFLAGS=-static"
 
+  # package extensions
+  ext=$(package_ext $host)
+  targetext=$(package_ext $target)
+
   # prepare MinGW-w64
   fetch_source_release "$_CROSS_URL_MINGW_W64" "mingw-w64-$_CROSS_VERSION_MINGW_W64" "bz2" || exit 1
   if [ -h "$_CROSS_SOURCE_DIR/mingw-w64-headers-$_CROSS_VERSION_MINGW_W64" ]
@@ -91,7 +95,7 @@ build_mingw_toolchain()
   fi
 
 ## MinGW-w64 headers
-  if [ -f "$_CROSS_PACKAGE_DIR/$target-mingw-w64-headers-$_CROSS_VERSION_MINGW_W64$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$target-mingw-w64-headers-$_CROSS_VERSION_MINGW_W64$targetext" ]
   then
     printf ">> Found mingw-w64-headers-$_CROSS_VERSION_MINGW_W64 package.\n"
   else
@@ -112,7 +116,7 @@ build_mingw_toolchain()
   fi
 
 ## Binutils
-  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-binutils-$_CROSS_VERSION_BINUTILS$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-binutils-$_CROSS_VERSION_BINUTILS$ext" ]
   then
     printf ">> Found binutils-$_CROSS_VERSION_BINUTILS package.\n"
   else
@@ -135,7 +139,7 @@ build_mingw_toolchain()
   fi
 
 ## GCC - bootstrap
-  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap$ext" ]
   then
     printf ">> Found gcc-$_CROSS_VERSION_GCC$abisuffix-bootstrap package.\n"
   else
@@ -165,7 +169,7 @@ build_mingw_toolchain()
   fi
 
 ## MinGW-w64 CRT
-  if [ -f "$_CROSS_PACKAGE_DIR/$target-mingw-w64-crt-$_CROSS_VERSION_MINGW_W64$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$target-mingw-w64-crt-$_CROSS_VERSION_MINGW_W64$targetext" ]
   then
     printf ">> Found mingw-w64-crt-$_CROSS_VERSION_MINGW_W64 package.\n"
   else
@@ -189,7 +193,7 @@ build_mingw_toolchain()
   fi
 
 ## MinGW-w64 winpthreads
-  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64$ext" ]
   then
     printf ">> Found mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64 package.\n"
   else
@@ -225,7 +229,7 @@ build_mingw_toolchain()
   fi
 
 ## GCC
-  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-gcc-$_CROSS_VERSION_GCC$abisuffix$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-gcc-$_CROSS_VERSION_GCC$abisuffix$ext" ]
   then
     printf ">> Found gcc-$_CROSS_VERSION_GCC$abisuffix package.\n"
   else
@@ -270,16 +274,16 @@ build_mingw_toolchain()
     package "${host}_$target" "gcc-$_CROSS_VERSION_GCC$abisuffix" || exit 1
   fi
 
-  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-gdb-$_CROSS_VERSION_GDB$_CROSS_COMPRESS_EXT" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/${host}_$target-gdb-$_CROSS_VERSION_GDB$ext" ]
   then
     printf ">> Found gdb-$_CROSS_VERSION_GDB package.\n"
   else
     fetch_source_release "$_CROSS_URL_GNU/gdb" "gdb-$_CROSS_VERSION_GDB" "bz2" || exit 1
     case "$host" in
       *-mingw32)
-        if [ ! -h "$_CROSS_PACKAGE_DIR/$host-python-$_CROSS_VERSION_PYTHON$_CROSS_COMPRESS_EXT" ]
+        if [ ! -h "$_CROSS_PACKAGE_DIR/$host-python-$_CROSS_VERSION_PYTHON$ext" ]
         then
-          ln -s "$_CROSS_DIR/$host-python-$_CROSS_VERSION_PYTHON$_CROSS_COMPRESS_EXT" "$_CROSS_PACKAGE_DIR"
+          ln -s "$_CROSS_DIR/$host-python-$_CROSS_VERSION_PYTHON$ext" "$_CROSS_PACKAGE_DIR"
         fi
         stage_projects "$host" "python-$_CROSS_VERSION_PYTHON" "python" || exit 1
         if [ "$host" = "x86_64-w64-mingw32" ]
@@ -315,7 +319,7 @@ build_mingw_toolchain()
 
   case "$host" in
     *-mingw32)
-      if [ -f "$_CROSS_PACKAGE_DIR/$host-make-$_CROSS_VERSION_MAKE$_CROSS_COMPRESS_EXT" ]
+      if [ -f "$_CROSS_PACKAGE_DIR/$host-make-$_CROSS_VERSION_MAKE$ext" ]
       then
         printf ">> Found make-$_CROSS_VERSION_MAKE package.\n"
       else
@@ -332,6 +336,4 @@ build_mingw_toolchain()
         package "$host" "make-$_CROSS_VERSION_MAKE" || exit 1
       fi
   esac
-
-  rm -rf "$_CROSS_STAGE_DIR"
 )

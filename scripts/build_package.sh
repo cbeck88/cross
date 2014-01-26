@@ -31,8 +31,11 @@ geturl()
   
   # create full URL
   case $name in
-    gmp|mpfr|mpc|cloog|libiconv|gdb|binutils|mingw-w64)
+    gmp|mpfr|mpc|cloog|libiconv|gdb|binutils)
       echo "$gnu/$name/$name-$version$ext"
+      ;;
+    mingw-w64)
+      echo "$mingww64/$name-$version$ext"
       ;;
     gcc)
       echo "$gnu/$name/$name-$version/$name-$version$ext"
@@ -77,9 +80,13 @@ configure()
 (
   name="$1"
   version="$2"
-  host="$3"
+  longname="$3"
   build="$_CROSS_BUILD"
-  target="$4"
+
+  host=$(hostfromlongname $longname)
+  target=$(targetfromlongname $longname)
+  suffix=$(suffixfromlongname $longname)
+  
   srcdir="$_CROSS_SOURCE_DIR/$name-$version"
   stagedir="$_CROSS_STAGE_DIR"
   
@@ -240,14 +247,56 @@ configure()
      || { printf "Failure configuring $project$suffix. Check $logdir/configure$suffix.log for details.\n"; exit 1; }
 )
 
+download_and_patch()
+(
+  name="$1"
+  version="$2"
+  
+  if [ -d "$_CROSS_SOURCE_DIR/$name-$version" ]
+  then
+    printf ">>> Found previously extracted and patched $name source.\n"
+    exit 0
+  fi
+  
+  url=$(geturl $name $version)
+  patches=$(getpatches $name $version)
+  
+  printf ">>> Downloading $url.\n"
+  curl -# -L "$url" || { printf "Failure downloading $url.\n"; exit 1; }
+  
+  printf ">>> Extracting $file.\n"
+  cd "$_CROSS_SOURCE_DIR"
+  tar -xf "$_CROSS_DOWNLOAD_DIR/$file"
+  
+  cd "$_CROSS_SOURCE_DIR/$name"
+  for patchfile in $patches
+  do
+    printf ">>> Applying patch $patchfile.\n"
+    printf "**** Patching $name-$version in $_CROSS_SOURCE_DIR with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
+    patch -p0 -i "$_CROSS_PATCH_DIR/$patchfile.patch.txt" >> "$_CROSS_LOG_DIR/patches.log" 2>&1 || exit 1
+  done
+)
+
 build_package()
 (
   name="$1"
   version="$2"
-
-  url=$(geturl $name $version)
-  patches=$(getpatches $name $version)
+  host_target="$3"
   
+  
+  case "$host" in
+    *-mingw32)
+      ext=".7z"
+      ;;
+    *)
+      ext=".tar.xz"
+  esac
+  
+  packagefile="$_CROSS_PACKAGE_DIR/
+  
+  download_and_patch $name $version
+  
+  configure $name $version $host $target
   
   
   

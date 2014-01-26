@@ -1,5 +1,38 @@
 #! /usr/bin/env sh
 
+package_compress()
+(
+  case "$1" in
+    i686-w64-mingw32*|x86_64-w64-mingw32*)
+      echo "7za -l -bd -mx9 a"
+      ;;
+    *)
+      echo "tar -Jhcf"
+  esac
+)
+
+package_ext()
+(
+  case "$1" in
+    i686-w64-mingw32*|x86_64-w64-mingw32*)
+      echo ".7z"
+      ;;
+    *)
+      echo ".tar.xz"
+  esac
+)
+
+package_decompress()
+(
+  case "$1" in
+    i686-w64-mingw32*|x86_64-w64-mingw32*)
+      echo "7za -y x"
+      ;;
+    *)
+      echo "tar -xf"
+  esac
+)
+
 package()
 (
   host="$1"
@@ -21,19 +54,12 @@ package()
   find . -name \*.la -exec rm -f {} \;
   find . -type d -empty -delete
   
-  case $host in
-    *-mingw32)
-      compress="7za -l -bd -mx9 a"
-      ext=".7z"
-      ;;
-    *)
-      compress="tar -Jhcf"
-      ext=".tar.xz"
-  esac
+  compress=$(package_compress $host)
+  ext=$(package_ext $host)
 
-  $compress "$_CROSS_PACKAGE_DIR/$packagename$ext" * > "$logdir/package$packagesuffix.log" 2>&1 \
+  $compress $_CROSS_PACKAGE_DIR/$packagename$ext * > "$logdir/package$packagesuffix.log" 2>&1 \
     || { printf "Failure packaging $project$packagesuffix. Check $logdir/install$packagesuffix.log for details.\n"; exit 1; }
 
   cd "$_CROSS_DIR"
-  rm -rf "$_CROSS_STAGE_INSTALL_DIR"
+  rm -rf "$_CROSS_STAGE_INSTALL_DIR"/*
 )
