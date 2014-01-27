@@ -53,12 +53,12 @@ package()
   cd "$_CROSS_STAGE_INSTALL_DIR"
   find . -name \*.la -exec rm -f {} \;
   find . -type d -empty -delete
-  
+
   compress=$(package_compress $host)
   ext=$(package_ext $host)
 
   $compress $_CROSS_PACKAGE_DIR/$packagename$ext * > "$logdir/package$packagesuffix.log" 2>&1 \
-    || { printf "Failure packaging $project$packagesuffix. Check $logdir/install$packagesuffix.log for details.\n"; exit 1; }
+    || { printf "Failure packaging $project$packagesuffix. Check $logdir/package$packagesuffix.log for details.\n"; exit 1; }
 
   cd "$_CROSS_DIR"
   rm -rf "$_CROSS_STAGE_INSTALL_DIR"/*
