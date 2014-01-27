@@ -86,6 +86,7 @@ build_gnu_toolchain()
 
         printf ">> Creating $longname toolchain package.\n"
         rm -f "$_CROSS_PACKAGE_DIR/$toolchainpackage"
+        rm -rf "$_CROSS_STAGE_DIR"/*
         stage_projects "$target" "mingw-w64-headers-$_CROSS_VERSION_MINGW_W64 mingw-w64-crt-$_CROSS_VERSION_MINGW_W64" "$shortname" || exit 1
         stage_projects "${host}_$target" "binutils-$_CROSS_VERSION_BINUTILS gcc-$_CROSS_VERSION_GCC$abisuffix \
                                           mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64 gdb-$_CROSS_VERSION_GDB" "$shortname" || exit 1
