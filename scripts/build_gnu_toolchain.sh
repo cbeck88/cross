@@ -14,19 +14,9 @@ build_gnu_toolchain()
     cygwin64*)
       host="x86_64-pc-cygwin" ;;
     mingw32*)
-      host="i686-w64-mingw32"
-      # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for GMP/PPL.
-      case "$_CROSS_VERSION_GCC" in
-        4.[6-7]*)
-          prereqabisuffix="$abisuffix" ;;
-      esac ;;
+      host="i686-w64-mingw32" ;;
     mingw64*)
-      host="x86_64-w64-mingw32"
-      # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for GMP/PPL.
-      case "$_CROSS_VERSION_GCC" in
-        4.[6-7]*)
-          prereqabisuffix="$abisuffix" ;;
-      esac ;;
+      host="x86_64-w64-mingw32" ;;
     *)
       printf "Error: unknown longname: $longname.\n"
       exit 1 ;;
@@ -70,6 +60,12 @@ build_gnu_toolchain()
     *)
       printf "Error: unknown longname: $longname.\n"
       exit 1 ;;
+  esac
+
+  # abisuffix to prevent mixing C++ eh libgcc linkage failures. Only relevant for GMP/PPL.
+  case "$host" in
+    *-mingw32)
+      prereqabisuffix="$abisuffix"
   esac
 
   printf "> Building GCC compiler from $host to $target.\n"

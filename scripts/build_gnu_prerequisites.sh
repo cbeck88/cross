@@ -11,9 +11,9 @@ build_gnu_prerequisites()
   prereq_build="$_CROSS_BUILD_DIR/prereq-$_CROSS_VERSION_GCC-$host"
   mkdir -p "$prereq_build" && cd "$prereq_build"
 
-  if [ -f "$_CROSS_PACKAGE_DIR/$host-gmp-$_CROSS_VERSION_GMP$ext" ]
+  if [ -f "$_CROSS_PACKAGE_DIR/$host-gmp-$_CROSS_VERSION_GMP$abisuffix$ext" ]
   then
-    printf ">> Found gmp-$_CROSS_VERSION_GMP package.\n"
+    printf ">> Found gmp-$_CROSS_VERSION_GMP$abisuffix package.\n"
   else
     fetch_source_release "$_CROSS_URL_GNU/gmp" "gmp-$_CROSS_VERSION_GMP" "bz2" || exit 1
     gmpconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
@@ -57,9 +57,9 @@ build_gnu_prerequisites()
 
   case "$_CROSS_VERSION_GCC" in
     4.[6-7]*)
-      if [ -f "$_CROSS_PACKAGE_DIR/$host-gmp-$_CROSS_VERSION_GMP$ext" ]
+      if [ -f "$_CROSS_PACKAGE_DIR/$host-ppl-$_CROSS_VERSION_PPL$abisuffix$ext" ]
       then
-        printf ">> Found make-$_CROSS_VERSION_MAKE package.\n"
+        printf ">> Found ppl-$_CROSS_VERSION_PPL$abisuffix package.\n"
       else
         fetch_source_release "$_CROSS_URL_PPL" "ppl-$_CROSS_VERSION_PPL" "gz" || exit 1
         pplconfigureargs="--host=$host --build=$_CROSS_BUILD --prefix=/ \
