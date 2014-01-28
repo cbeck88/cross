@@ -7,7 +7,7 @@ build_mingw_toolchain()
   builddir="$3"
   abisuffix="$4"
   prereqabisuffix="$5"
-  
+
   # Compiler settings
   #TODO make selectable and working: winpthreads build complains that it can't link to -lpthread :-(
   gccabioptions="--enable-threads=posix"
@@ -215,15 +215,17 @@ build_mingw_toolchain()
     build_with_autotools "mingw-w64-winpthreads" "$builddir" "$_CROSS_VERSION_MINGW_W64" "${host}_$target" \
                          "$winpthreadsconfigureargs" "$_CROSS_MAKE_ARGS" || exit 1
 
-    case "$host" in
-      *-w64-mingw32)
-        mkdir -p "$_CROSS_STAGE_INSTALL_DIR/bin"
-        mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
-        ;;
-      *)
-        mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$target/lib/" || exit 1
-        rmdir "$_CROSS_STAGE_INSTALL_DIR/$target/bin/" || exit 1
-    esac
+    if [ "$host" = "$target" ]
+    then
+      case "$host" in
+        *-w64-mingw32)
+          mkdir -p "$_CROSS_STAGE_INSTALL_DIR/bin"
+          mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
+      esac
+    else
+      mv "$_CROSS_STAGE_INSTALL_DIR/$target/bin/libwinpthread-1.dll" "$_CROSS_STAGE_INSTALL_DIR/$target/lib/" || exit 1
+      rmdir "$_CROSS_STAGE_INSTALL_DIR/$target/bin/" || exit 1
+    fi
     copy_licenses "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" "COPYING" || exit 1
     package "${host}_$target" "mingw-w64-winpthreads-$_CROSS_VERSION_MINGW_W64" || exit 1
   fi
@@ -254,9 +256,9 @@ build_mingw_toolchain()
     build_with_autotools "gcc" "$builddir" "$_CROSS_VERSION_GCC" "${host}_$target" \
                          "$gccconfigureargs $gcclanguages" "$_CROSS_MAKE_ARGS" "install-strip" "$abisuffix" || exit 1
     mv "$_CROSS_STAGE_INSTALL_DIR$_CROSS_STAGE_DIR/$shortname"/* "$_CROSS_STAGE_INSTALL_DIR/"
-    case "$host-$_CROSS_VERSION_GCC" in
-      *-*-mingw32-4.8*)
-        printf ">>> Fixing libgcc DLL location for GCC 4.8+.\n"
+    case "$host-$target" in
+      *-*-mingw32-*-*-mingw32)
+        printf ">>> Fixing libgcc DLL location.\n"
         if [ -f "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" ]
         then
           mv "$_CROSS_STAGE_INSTALL_DIR/lib/libgcc_s_sjlj-1.dll" "$_CROSS_STAGE_INSTALL_DIR/bin/" || exit 1
