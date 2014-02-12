@@ -22,6 +22,9 @@ case "$_CROSS_VERSION_GCC" in
   4.7*)
     export _CROSS_PATCHES_GCC="gcc-4.7-posix_threads"
     ;;
+  4.8.[0-2])
+    export _CROSS_PATCHES_GCC="gcc-4.8.pre3-adatools"
+    ;;
   4.8*)
     export _CROSS_PATCHES_GCC=
     ;;

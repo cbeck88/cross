@@ -34,7 +34,7 @@ fetch_source_release()
     printf ">>> Applying patch $patchfile.\n"
     printf "**** Patching $name in $_CROSS_SOURCE_DIR with $patchfile:\n" >> "$_CROSS_LOG_DIR/patches.log"
     patch -p0 -i "$_CROSS_PATCH_DIR/$patchfile.patch.txt" >> "$_CROSS_LOG_DIR/patches.log" 2>&1 \
-      || { printf "Failure applying patch $patchfile for $name."; exit 1; }
+      || { printf "Failure applying patch $patchfile for $name.\n"; exit 1; }
   done
 
   cd "$_CROSS_DIR"

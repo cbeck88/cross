@@ -61,7 +61,7 @@ build_mingw_toolchain()
       pploptions="--with-ppl=$_CROSS_STAGE_DIR --disable-ppl-version-check \
                   --with-host-libstdcxx='-lstdc++ -lm -gcc_eh'"
   esac
-  gcclanguages="--enable-languages=c,lto,c++,objc,obj-c++,fortran,java"
+  gcclanguages="--enable-languages=c,lto,c++,objc,obj-c++,fortran,java,ada"
   gccconfigureargs="--host=$host --build=$_CROSS_BUILD --target=$target \
                     --with-sysroot=$_CROSS_STAGE_DIR/$shortname --prefix=$_CROSS_STAGE_DIR/$shortname \
                     --with-gmp=$_CROSS_STAGE_DIR --with-mpfr=$_CROSS_STAGE_DIR --with-mpc=$_CROSS_STAGE_DIR \
