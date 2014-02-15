@@ -82,18 +82,18 @@ index 0000000..87c0aa2
 +
 +#ifdef _WIN32
 +  // assume sysrooted compiler
++  getFilePaths().push_back(getDriver().Dir + "/../lib/gcc/"
++                           + getTriple().getTriple() + "/" + GCCVersion);
 +  getFilePaths().push_back(getDriver().Dir + "/../lib");
 +  getFilePaths().push_back(getDriver().Dir + "/../" + getTriple().getTriple()
 +                           + "/lib");
-+  getFilePaths().push_back(getDriver().Dir + "/../lib/gcc/"
-+                           + getTriple().getTriple() + "/" + GCCVersion);
 +
 +#else
 +  // assume install prefix /usr
-+  getFilePaths().push_back(getDriver().SysRoot + "/usr/"
-+                           + getTriple().getTriple() + "/lib");
 +  getFilePaths().push_back(getDriver().SysRoot + "/usr/lib/gcc/"
 +                           + getTriple().getTriple() + "/" + GCCVersion);
++  getFilePaths().push_back(getDriver().SysRoot + "/usr/"
++                           + getTriple().getTriple() + "/lib");
 +#endif
 +}
 +

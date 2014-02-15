@@ -22,7 +22,7 @@ check_prerequisites()
   check_executables "i686-w64-mingw32-ld" "i686-w64-mingw32-gcc" "x86_64-w64-mingw32-ld" "x86_64-w64-mingw32-gcc" || printf ">> None found.\n"
   
   printf ">> Checking for required executables.\n"
-  check_executables "gcc" "flex" "bison" "makeinfo" "7z" "svn" "git" "make" "python" "curl" "patch"
+  check_executables "gcc" "gnat" "flex" "bison" "makeinfo" "7z" "svn" "git" "make" "python" "curl" "patch"
   check_executables "python"
   printf ">> Checking executable versions.\n"
   printf ">>> Python\n"

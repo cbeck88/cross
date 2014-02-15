@@ -1,43 +1,28 @@
---- gcc/ada/gcc-interface/Make-lang.in
-+++ gcc/ada/gcc-interface/Make-lang.in
-@@ -625,7 +625,7 @@
- ada/doctools/xgnatugn$(build_exeext): ada/xgnatugn.adb
-  -$(MKDIR) ada/doctools
-  $(CP) $^ ada/doctools
-- cd ada/doctools && $(GNATMAKE) -q xgnatugn
-+ cd ada/doctools && gnatmake -q xgnatugn
-
- # Note that doc/gnat_ugn.texi and doc/projects.texi do not depend on
- # xgnatugn being built so we can distribute a pregenerated doc/gnat_ugn.info
 --- gcc/ada/gcc-interface/Makefile.in
 +++ gcc/ada/gcc-interface/Makefile.in
-@@ -2397,7 +2397,7 @@
-  "GNATLINK=$(GNATLINK)"  \
-  "GNATBIND=$(GNATBIND)"
-
+@@ -2397,7 +2397,7 @@ TOOLS_FLAGS_TO_PASS=		\
+ 	"GNATLINK=$(GNATLINK)"	\
+ 	"GNATBIND=$(GNATBIND)"
+ 
 -GCC_LINK=$(CC) $(GCC_LINK_FLAGS) $(ADA_INCLUDES)
 +GCC_LINK=$(CC) $(GCC_LINK_FLAGS) $(ADA_INCLUDES) $(LDFLAGS)
-
+ 
  # Build directory for the tools. Let's copy the target-dependent
  # sources using the same mechanism as for gnatlib. The other sources are
-@@ -2519,12 +2519,10 @@
-
- # Likewise for the tools
- ../../gnatmake$(exeext): $(P) b_gnatm.o link.o targext.o $(GNATMAKE_OBJS)
-- $(GCC_LINK) $(ALL_CFLAGS) $(LDFLAGS) -o $@ b_gnatm.o $(GNATMAKE_OBJS) \
--       $(TOOLS_LIBS)
-+ +$(GCC_LINK) $(ALL_CFLAGS) -o $@ b_gnatm.o $(GNATMAKE_OBJS) $(TOOLS_LIBS)
-
- ../../gnatlink$(exeext): $(P) b_gnatl.o link.o targext.o $(GNATLINK_OBJS)
-- $(GCC_LINK) $(ALL_CFLAGS) $(LDFLAGS) -o $@ b_gnatl.o $(GNATLINK_OBJS) \
--       $(TOOLS_LIBS)
-+ +$(GCC_LINK) $(ALL_CFLAGS) -o $@ b_gnatl.o $(GNATLINK_OBJS) $(TOOLS_LIBS)
-
- ../stamp-gnatlib-$(RTSDIR):
-  @if [ ! -f stamp-gnatlib-$(RTSDIR) ] ; \
---- gnattools/Makefile.in
-+++ gnattools/Makefile.in
-@@ -24,6 +24,8 @@
+--- gcc/ada/gcc-interface/Make-lang.in
++++ gcc/ada/gcc-interface/Make-lang.in
+@@ -625,7 +625,7 @@ ada.tags: force
+ ada/doctools/xgnatugn$(build_exeext): ada/xgnatugn.adb
+ 	-$(MKDIR) ada/doctools
+ 	$(CP) $^ ada/doctools
+-	cd ada/doctools && $(GNATMAKE) -q xgnatugn
++	cd ada/doctools && gnatmake -q xgnatugn
+ 
+ # Note that doc/gnat_ugn.texi and doc/projects.texi do not depend on
+ # xgnatugn being built so we can distribute a pregenerated doc/gnat_ugn.info
+--- gnattools/Makefile.in	2011-10-13
++++ gnattools/Makefile.in	2014-02-14
+@@ -24,6 +24,8 @@ srcdir = @srcdir@
  libdir = @libdir@
  build = @build@
  target = @target@
@@ -46,17 +31,17 @@
  prefix = @prefix@
  INSTALL = @INSTALL@
  INSTALL_DATA = @INSTALL_DATA@
-@@ -84,6 +86,7 @@
+@@ -84,6 +86,7 @@ TOOLS_FLAGS_TO_PASS_NATIVE= \
  TOOLS_FLAGS_TO_PASS_RE= \
-  "CC=../../xgcc -B../../" \
-  "CFLAGS=$(CFLAGS)" \
-+ "LDFLAGS=$(LDFLAGS)" \
-  "ADAFLAGS=$(ADAFLAGS)" \
-  "ADA_CFLAGS=$(ADA_CFLAGS)" \
-  "INCLUDES=$(INCLUDES_FOR_SUBDIR)" \
-@@ -97,6 +100,22 @@
-  "TOOLSCASE=cross"
-
+ 	"CC=../../xgcc -B../../" \
+ 	"CFLAGS=$(CFLAGS)" \
++	"LDFLAGS=$(LDFLAGS)" \
+ 	"ADAFLAGS=$(ADAFLAGS)" \
+ 	"ADA_CFLAGS=$(ADA_CFLAGS)" \
+ 	"INCLUDES=$(INCLUDES_FOR_SUBDIR)" \
+@@ -97,6 +100,22 @@ TOOLS_FLAGS_TO_PASS_RE= \
+ 	"TOOLSCASE=cross"
+ 
  # Variables for gnattools, cross
 +ifeq ($(build), $(host))
 +  GNATMAKE_FOR_HOST=gnatmake
@@ -75,30 +60,30 @@
 +RTS_DIR:=$(strip $(subst \,/,$(shell $(GNATLS_FOR_HOST) -v | grep adalib )))
 +
  TOOLS_FLAGS_TO_PASS_CROSS= \
-  "CC=$(CC)" \
-  "CFLAGS=$(CFLAGS) $(WARN_CFLAGS)" \
-@@ -108,9 +127,9 @@
-  "exeext=$(exeext)" \
-  "fsrcdir=$(fsrcdir)" \
-  "srcdir=$(fsrcdir)" \
-- "GNATMAKE=gnatmake" \
-- "GNATLINK=gnatlink" \
-- "GNATBIND=gnatbind" \
-+ "GNATMAKE=$(GNATMAKE_FOR_HOST)" \
-+ "GNATLINK=$(GNATLINK_FOR_HOST)" \
-+ "GNATBIND=$(GNATBIND_FOR_HOST)" \
-  "TOOLSCASE=cross" \
-  "LIBGNAT="
-
-@@ -179,11 +198,6 @@
-  $(MAKE) -C $(GCC_DIR)/ada/tools -f ../Makefile \
-    $(TOOLS_FLAGS_TO_PASS_NATIVE) common-tools
-
+ 	"CC=$(CC)" \
+ 	"CFLAGS=$(CFLAGS) $(WARN_CFLAGS)" \
+@@ -108,9 +127,9 @@ TOOLS_FLAGS_TO_PASS_CROSS= \
+ 	"exeext=$(exeext)" \
+ 	"fsrcdir=$(fsrcdir)" \
+ 	"srcdir=$(fsrcdir)" \
+-	"GNATMAKE=gnatmake" \
+-	"GNATLINK=gnatlink" \
+-	"GNATBIND=gnatbind" \
++	"GNATMAKE=$(GNATMAKE_FOR_HOST)" \
++	"GNATLINK=$(GNATLINK_FOR_HOST)" \
++	"GNATBIND=$(GNATBIND_FOR_HOST)" \
+ 	"TOOLSCASE=cross" \
+ 	"LIBGNAT="
+ 
+@@ -179,11 +198,6 @@ regnattools: $(GCC_DIR)/stamp-gnatlib-rt
+ 	$(MAKE) -C $(GCC_DIR)/ada/tools -f ../Makefile \
+ 	  $(TOOLS_FLAGS_TO_PASS_NATIVE) common-tools
+ 
 -# For cross builds of gnattools,
 -# put the host RTS dir first in the PATH to hide the default runtime
 -# files that are among the sources
 -# FIXME: This should be done in configure.
 -RTS_DIR:=$(strip $(subst \,/,$(shell gnatls -v | grep adalib )))
  gnattools-cross: $(GCC_DIR)/stamp-tools
-  # gnattools1-re
-  $(MAKE) -C $(GCC_DIR)/ada/tools -f ../Makefile \
+ 	# gnattools1-re
+ 	$(MAKE) -C $(GCC_DIR)/ada/tools -f ../Makefile \
